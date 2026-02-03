@@ -4,6 +4,7 @@ import { MongooseModule } from '@nestjs/mongoose';
 import { AppService } from './app.service';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { UserModule } from './user/user.module';
+import { InterviewModule } from './interview/interview.module';
 
 /**
  * 注入的意思是！！！！
@@ -38,6 +39,7 @@ import { UserModule } from './user/user.module';
       inject: [ConfigService], //告诉Nest:这个工厂函数需要 ConfigService，帮我注入
     }),
     UserModule,
+    InterviewModule,
   ],
   controllers: [AppController],
   providers: [AppService],

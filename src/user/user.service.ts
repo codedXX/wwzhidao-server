@@ -18,7 +18,7 @@ export class UserService {
   }
 
   findOne(id: number): User | undefined {
-    return this.users.find((user) => user.id == id);
+    return this.users.find((user) => user.id === id);
   }
 
   create(user: Omit<User, 'id'>): User {
@@ -28,5 +28,23 @@ export class UserService {
     };
     this.users.push(newUser);
     return newUser;
+  }
+
+  update(id: number, user: Partial<Omit<User, 'id'>>): User | undefined {
+    const index = this.users.findIndex((u) => u.id === id);
+    if (index === -1) {
+      return undefined;
+    }
+    this.users[index] = { ...this.users[index], ...user };
+    return this.users[index];
+  }
+
+  remove(id: number): boolean {
+    const index = this.users.findIndex((u) => u.id === id);
+    if (index === -1) {
+      return false;
+    }
+    this.users.splice(index, 1);
+    return true;
   }
 }
