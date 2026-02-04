@@ -6,6 +6,9 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { UserModule } from './user/user.module';
 import { InterviewModule } from './interview/interview.module';
 import { LoggerMiddleware } from './common/middleware/logger.middleware';
+import { APP_INTERCEPTOR } from '@nestjs/core';
+import { ResponseInterceptor } from './common/interceptors/response.interceptor';
+import { LoggingInterceptor } from './common/interceptors/logging.interceptor';
 
 /**
  * 注入的意思是！！！！
@@ -43,7 +46,22 @@ import { LoggerMiddleware } from './common/middleware/logger.middleware';
     InterviewModule,
   ],
   controllers: [AppController],
-  providers: [AppService, LoggerMiddleware],
+  providers: [
+    AppService,
+    LoggerMiddleware,
+    {
+      provide: APP_INTERCEPTOR,
+      useClass: ResponseInterceptor,
+    },
+    {
+      provide: APP_INTERCEPTOR,
+      useClass: LoggingInterceptor,
+    },
+    {
+      provide: APP_INTERCEPTOR,
+      useClass: ResponseInterceptor,
+    },
+  ],
 })
 
 /**
