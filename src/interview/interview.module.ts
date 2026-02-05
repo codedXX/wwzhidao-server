@@ -1,7 +1,6 @@
 import { Module } from '@nestjs/common';
 import { InterviewController } from './interview.controller';
 import { InterviewService } from './interview.service';
-import { UserService } from 'src/user/user.service';
 import { UserModule } from 'src/user/user.module';
 
 @Module({
