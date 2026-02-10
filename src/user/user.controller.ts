@@ -10,16 +10,22 @@ import {
   HttpStatus,
   ParseIntPipe,
   NotFoundException,
+  Request,
 } from '@nestjs/common';
 import { UserService } from './user.service';
 import type { User } from './user.service';
 import { CreateUserDto } from './dto/create-user.dto';
-import { UseInterceptors } from '@nestjs/common';
-import { LoggingInterceptor } from '../common/interceptors/logging.interceptor';
+// import { UseInterceptors } from '@nestjs/common';
+// import { LoggingInterceptor } from '../common/interceptors/logging.interceptor';
+import { UseGuards } from '@nestjs/common';
+import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { RolesGuard } from '../auth/roles.guard';
+import { Roles } from '../auth/roles.guard';
 
 @Controller('user')
 // 使用日志拦截器（控制器级别拦截器）
 // @UseInterceptors(LoggingInterceptor)
+@UseGuards(JwtAuthGuard) // 所有路由都需要认证
 export class UserController {
   /**
    *   constructor(private readonly userService: UserService) {}  等价于
@@ -69,5 +75,18 @@ export class UserController {
     if (!success) {
       throw new NotFoundException(`用户 ID ${id} 不存在`);
     }
+  }
+
+  @Get('info')
+  getInfo(@Request() req: any) {
+    return req.user;
+  }
+
+  @Get('admin')
+  @UseGuards(RolesGuard)
+  @Roles('admin')
+  getAdminInfo(@Request() req: any) {
+    // 只有 admin 角色可以访问
+    return { message: '管理员信息', user: req.user };
   }
 }

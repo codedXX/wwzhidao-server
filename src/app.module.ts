@@ -9,6 +9,8 @@ import { LoggerMiddleware } from './common/middleware/logger.middleware';
 import { APP_INTERCEPTOR } from '@nestjs/core';
 import { ResponseInterceptor } from './common/interceptors/response.interceptor';
 import { LoggingInterceptor } from './common/interceptors/logging.interceptor';
+import { JwtModule } from '@nestjs/jwt';
+import { JwtStrategy } from './auth/jwt.strategy';
 
 /**
  * 注入的意思是！！！！
@@ -17,6 +19,10 @@ import { LoggingInterceptor } from './common/interceptors/logging.interceptor';
 
 @Module({
   imports: [
+    JwtModule.register({
+      secret: 'sunday-secret-key', // 应该从环境变量读取
+      signOptions: { expiresIn: '24h' },
+    }),
     ConfigModule.forRoot({
       /**
        * 不加isGlobal: true的话，imports: [ConfigModule]每个模块都要写一次，
@@ -61,6 +67,8 @@ import { LoggingInterceptor } from './common/interceptors/logging.interceptor';
       provide: APP_INTERCEPTOR,
       useClass: ResponseInterceptor,
     },
+    // 把策略注册为 provider
+    JwtStrategy,
   ],
 })
 
