@@ -12,6 +12,7 @@ import { LoggingInterceptor } from './common/interceptors/logging.interceptor';
 import { JwtModule } from '@nestjs/jwt';
 import { JwtStrategy } from './auth/jwt.strategy';
 import { AllExceptionsFilter } from './common/filters/all-exceptions.filter';
+import { configValidationSchema } from './config/config.schema';
 
 /**
  * 注入的意思是！！！！
@@ -29,7 +30,14 @@ import { AllExceptionsFilter } from './common/filters/all-exceptions.filter';
        * 不加isGlobal: true的话，imports: [ConfigModule]每个模块都要写一次，
        * 加了后全局可用，自动注入
        */
-      isGlobal: true, //全局模块，可以在任何地方使用
+      // isGlobal: true, //全局模块，可以在任何地方使用
+      envFilePath: `.env.${process.env.NODE_ENV || 'development'}`,
+      isGlobal: true,
+      validationSchema: configValidationSchema,
+      validationOptions: {
+        allowUnknown: true,
+        abortEarly: true,
+      },
     }),
     /**
      * 异步方式连接 MongoDB 数据库
