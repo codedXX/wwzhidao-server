@@ -6,11 +6,12 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { UserModule } from './user/user.module';
 import { InterviewModule } from './interview/interview.module';
 import { LoggerMiddleware } from './common/middleware/logger.middleware';
-import { APP_INTERCEPTOR } from '@nestjs/core';
+import { APP_INTERCEPTOR, APP_FILTER } from '@nestjs/core';
 import { ResponseInterceptor } from './common/interceptors/response.interceptor';
 import { LoggingInterceptor } from './common/interceptors/logging.interceptor';
 import { JwtModule } from '@nestjs/jwt';
 import { JwtStrategy } from './auth/jwt.strategy';
+import { AllExceptionsFilter } from './common/filters/all-exceptions.filter';
 
 /**
  * 注入的意思是！！！！
@@ -69,6 +70,11 @@ import { JwtStrategy } from './auth/jwt.strategy';
     },
     // 把策略注册为 provider
     JwtStrategy,
+    //注册全局异常过滤器
+    {
+      provide: APP_FILTER,
+      useClass: AllExceptionsFilter,
+    },
   ],
 })
 

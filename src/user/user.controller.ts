@@ -25,7 +25,7 @@ import { Roles } from '../auth/roles.guard';
 @Controller('user')
 // 使用日志拦截器（控制器级别拦截器）
 // @UseInterceptors(LoggingInterceptor)
-@UseGuards(JwtAuthGuard) // 所有路由都需要认证
+// @UseGuards(JwtAuthGuard) // 所有路由都需要认证
 export class UserController {
   /**
    *   constructor(private readonly userService: UserService) {}  等价于
@@ -42,9 +42,17 @@ export class UserController {
     return this.userService.findAll();
   }
 
+  @Get('error')
+  testError() {
+    throw new Error('这是一个测试错误');
+  }
+
   @Get(':id')
   findOne(@Param('id', ParseIntPipe) id: number): User {
     const user = this.userService.findOne(id);
+    if (id > 100) {
+      throw new NotFoundException(`用户 ID ${id} 不存在`);
+    }
     if (!user) {
       throw new NotFoundException(`用户 ID ${id} 不存在`);
     }
