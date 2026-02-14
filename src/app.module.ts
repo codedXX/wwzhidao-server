@@ -30,13 +30,39 @@ import { configValidationSchema } from './config/config.schema';
        * 不加isGlobal: true的话，imports: [ConfigModule]每个模块都要写一次，
        * 加了后全局可用，自动注入
        */
-      // isGlobal: true, //全局模块，可以在任何地方使用
+      /**
+       * 环境变量文件路径
+       * 根据当前运行环境动态选择对应的.env文件
+       * - 生产环境: .env.production
+       * - 开发环境: .env.development
+       * - 测试环境: .env.test
+       */
       envFilePath: `.env.${process.env.NODE_ENV || 'development'}`,
-      isGlobal: true,
+
+      /**
+       * 全局模块设置
+       * 设置为true后，ConfigModule会成为全局模块
+       * 无需在其他模块中重复imports: [ConfigModule]
+       * ConfigService会自动注入到任何需要的地方
+       */
+      isGlobal: true, //全局模块，可以在任何地方使用
+
+      /**
+       * 配置验证模式
+       * 使用configValidationSchema验证环境变量
+       * 确保所有必需的配置项都存在且格式正确
+       * 验证失败时，应用启动阶段就会报错
+       */
       validationSchema: configValidationSchema,
+
+      /**
+       * 验证选项配置
+       * - allowUnknown: true: 允许存在未在验证模式中定义的环境变量
+       * - abortEarly: true: 一旦发现第一个验证错误就停止验证，立即报错
+       */
       validationOptions: {
-        allowUnknown: true,
-        abortEarly: true,
+        allowUnknown: true, // 允许未定义的环境变量存在
+        abortEarly: true, // 发现第一个错误就停止验证
       },
     }),
     /**
