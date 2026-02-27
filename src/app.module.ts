@@ -1,91 +1,9 @@
 import { Module, NestModule, MiddlewareConsumer } from '@nestjs/common';
 import { AppController } from './app.controller';
-import { MongooseModule } from '@nestjs/mongoose';
 import { AppService } from './app.service';
-import { ConfigModule, ConfigService } from '@nestjs/config';
-import { UserModule } from './user/user.module';
-import { InterviewModule } from './interview/interview.module';
-import { LoggerMiddleware } from './common/middleware/logger.middleware';
-import { APP_INTERCEPTOR, APP_FILTER } from '@nestjs/core';
-import { ResponseInterceptor } from './common/interceptors/response.interceptor';
-import { LoggingInterceptor } from './common/interceptors/logging.interceptor';
-import { JwtModule } from '@nestjs/jwt';
-import { JwtStrategy } from './auth/jwt.strategy';
-import { AllExceptionsFilter } from './common/filters/all-exceptions.filter';
-import { configValidationSchema } from './config/config.schema';
-
-/**
- * 注入的意思是！！！！
- * 1.注入 = 别自己 new，对象由框架帮你创建并塞给你用。 *
- */
 
 @Module({
-  imports: [
-    JwtModule.register({
-      secret: 'sunday-secret-key', // 应该从环境变量读取
-      signOptions: { expiresIn: '24h' },
-    }),
-    ConfigModule.forRoot({
-      /**
-       * 不加isGlobal: true的话，imports: [ConfigModule]每个模块都要写一次，
-       * 加了后全局可用，自动注入
-       */
-      /**
-       * 环境变量文件路径
-       * 根据当前运行环境动态选择对应的.env文件
-       * - 生产环境: .env.production
-       * - 开发环境: .env.development
-       * - 测试环境: .env.test
-       */
-      envFilePath: `.env.${process.env.NODE_ENV || 'development'}`,
-
-      /**
-       * 全局模块设置
-       * 设置为true后，ConfigModule会成为全局模块
-       * 无需在其他模块中重复imports: [ConfigModule]
-       * ConfigService会自动注入到任何需要的地方
-       */
-      isGlobal: true, //全局模块，可以在任何地方使用
-
-      /**
-       * 配置验证模式
-       * 使用configValidationSchema验证环境变量
-       * 确保所有必需的配置项都存在且格式正确
-       * 验证失败时，应用启动阶段就会报错
-       */
-      validationSchema: configValidationSchema,
-
-      /**
-       * 验证选项配置
-       * - allowUnknown: true: 允许存在未在验证模式中定义的环境变量
-       * - abortEarly: true: 一旦发现第一个验证错误就停止验证，立即报错
-       */
-      validationOptions: {
-        allowUnknown: true, // 允许未定义的环境变量存在
-        abortEarly: true, // 发现第一个错误就停止验证
-      },
-    }),
-    /**
-     * 异步方式连接 MongoDB 数据库
-     */
-    MongooseModule.forRootAsync({
-      imports: [ConfigModule], //把 ConfigModule“拉进”这个动态模块的作用域里，让它的服务（ConfigService）能被注入使用。
-      /**
-       * useFactory:这是一个工厂函数，专门用来生成数据库配置。
-       * 意思是：
-       * 1.先从 .env 读取 MONGODB_URI
-       * 2.如果没有，就用默认本地数据库
-       */
-      useFactory: (configService: ConfigService) => ({
-        uri:
-          configService.get<string>('MONGODB_URI') ||
-          'mongodb://localhost:27017/wwzhidao',
-      }),
-      inject: [ConfigService], //告诉Nest:这个工厂函数需要 ConfigService，帮我注入
-    }),
-    UserModule,
-    InterviewModule,
-  ],
+  imports: [],
   controllers: [AppController],
   providers: [
     AppService,
