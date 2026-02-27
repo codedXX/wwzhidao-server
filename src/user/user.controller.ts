@@ -1,100 +1,78 @@
 import {
   Controller,
-  Get,
   Post,
   Body,
-  Param,
-  Put,
-  Delete,
-  HttpCode,
-  HttpStatus,
-  ParseIntPipe,
-  NotFoundException,
+  Get,
+  UseGuards,
   Request,
+  Put,
+  Query,
 } from '@nestjs/common';
 import { UserService } from './user.service';
-import type { User } from './user.service';
-import { CreateUserDto } from './dto/create-user.dto';
-// import { UseInterceptors } from '@nestjs/common';
-// import { LoggingInterceptor } from '../common/interceptors/logging.interceptor';
-import { UseGuards } from '@nestjs/common';
+import { RegisterDto } from './dto/register.dto';
+import { ResponseUtil } from '../common/utils/response.util';
+import { LoginDto } from './dto/login.dto';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
-import { RolesGuard } from '../auth/roles.guard';
-import { Roles } from '../auth/roles.guard';
+import { Public } from '../auth/public.decorator';
+import { ApiOperation } from '@nestjs/swagger';
+import { UpdateUserDto } from './dto/update-user.dto';
 
 @Controller('user')
-// 使用日志拦截器（控制器级别拦截器）
-// @UseInterceptors(LoggingInterceptor)
-// @UseGuards(JwtAuthGuard) // 所有路由都需要认证
+// @UseGuards(JwtAuthGuard) // 使用认证守卫
 export class UserController {
-  /**
-   *   constructor(private readonly userService: UserService) {}  等价于
-   *  private readonly userService:UserService
-   *    constructor(userService: UserService) {
-   *        this.userService = userService;
-   *  }
-   *
-   */
   constructor(private readonly userService: UserService) {}
 
-  @Get()
-  findAll(): User[] {
-    return this.userService.findAll();
+  @Post('register')
+  @Public()
+  async register(@Body() registerDto: RegisterDto) {
+    const result = await this.userService.register(registerDto);
+    return ResponseUtil.success(result, '注册成功');
   }
 
-  @Get('error')
-  testError() {
-    throw new Error('这是一个测试错误');
-  }
-
-  @Get(':id')
-  findOne(@Param('id', ParseIntPipe) id: number): User {
-    const user = this.userService.findOne(id);
-    if (id > 100) {
-      throw new NotFoundException(`用户 ID ${id} 不存在`);
-    }
-    if (!user) {
-      throw new NotFoundException(`用户 ID ${id} 不存在`);
-    }
-    return user;
-  }
-
-  @Post()
-  create(@Body() createUserDto: CreateUserDto): User {
-    return this.userService.create(createUserDto);
-  }
-
-  @Put(':id')
-  update(
-    @Param('id', ParseIntPipe) id: number,
-    @Body() updateUserDto: { name?: string; email?: string },
-  ): User {
-    const user = this.userService.update(id, updateUserDto);
-    if (!user) {
-      throw new NotFoundException(`用户 ID ${id} 不存在`);
-    }
-    return user;
-  }
-
-  @Delete(':id')
-  @HttpCode(HttpStatus.NO_CONTENT)
-  remove(@Param('id', ParseIntPipe) id: number): void {
-    const success = this.userService.remove(id);
-    if (!success) {
-      throw new NotFoundException(`用户 ID ${id} 不存在`);
-    }
+  @Post('login')
+  @Public()
+  async login(@Body() loginDto: LoginDto) {
+    const result = await this.userService.login(loginDto);
+    return ResponseUtil.success(result, '登录成功');
   }
 
   @Get('info')
-  getInfo(@Request() req: any) {
-    return req.user;
+  async getUserInfo(@Request() req: any) {
+    const { userId } = req.user;
+    const userInfo = await this.userService.getUserInfo(userId);
+    return ResponseUtil.success(userInfo, '获取成功');
   }
 
-  @Get('admin')
-  @UseGuards(RolesGuard)
-  @Roles('admin')
-  getAdminInfo(@Request() req: any) {
-    // 只有 admin 角色可以访问
-    return { message: '管理员信息', user: req.user };
+  @Put('profile')
+  async updateUserProfile(
+    @Request() req: any,
+    @Body() updateUserDto: UpdateUserDto,
+  ) {
+    const { userId } = req.user;
+    const user = await this.userService.updateUser(userId, updateUserDto);
+    return ResponseUtil.success(user, '更新成功');
+  }
+
+  /**
+   * 获取用户消费记录（包括简历押题、专项面试、综合面试）
+   */
+  @Get('consumption-records')
+  @UseGuards(JwtAuthGuard)
+  @ApiOperation({
+    summary: '获取用户消费记录',
+    description:
+      '获取用户所有的功能消费记录，包括简历押题、专项面试、综合面试等',
+  })
+  async getUserConsumptionRecords(
+    @Request() req: any,
+    @Query('skip') skip: number = 0,
+    @Query('limit') limit: number = 20,
+  ) {
+    const { userId } = req.user;
+    const result = await this.userService.getUserConsumptionRecords(userId, {
+      skip,
+      limit,
+    });
+    return ResponseUtil.success(result, '获取成功');
   }
 }
