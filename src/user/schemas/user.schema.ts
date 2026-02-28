@@ -7,6 +7,11 @@ export type UserDocument = User &
     comparePassword(candidatePassword: string): Promise<boolean>;
   };
 
+/**
+ * timestamps: true 选项：这个配置告诉 Mongoose 自动为文档添加两个时间戳字段
+ *  1.createdAt: Date 字段：这是文档创建时的时间戳。
+ *  2.updatedAt: Date 字段：这是文档最后更新时的时间戳。
+ */
 @Schema({ timestamps: true })
 export class User {
   // 基础认证字段
