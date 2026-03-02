@@ -5,11 +5,19 @@ import { InterviewAIService } from './services/interview-ai.service';
 import { DocumentParserService } from './services/document-parser.service';
 import { UserModule } from 'src/user/user.module';
 import { AIModule } from 'src/ai/ai.module';
+import { ResumeAnalysisService } from './services/resume-analysis.service';
+import { ConversationContinuationService } from './services/conversation-continuation.service';
 
 @Module({
   imports: [UserModule, AIModule], //导入用户模块，可以使用UserService
   controllers: [InterviewController],
-  providers: [InterviewService, InterviewAIService, DocumentParserService],
+  providers: [
+    InterviewService,
+    InterviewAIService,
+    DocumentParserService,
+    ResumeAnalysisService,
+    ConversationContinuationService,
+  ],
   exports: [InterviewService, InterviewAIService, DocumentParserService],
 })
 export class InterviewModule {}

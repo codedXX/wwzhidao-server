@@ -20,7 +20,7 @@ import { JwtStrategy } from './auth/jwt.strategy';
 import { getTokenExpirationSeconds } from './common/utils/jwt.util';
 import { WechatController } from './wechat/wechat.controller';
 import { WechatService } from './wechat/wechat.service';
-import { AiModule } from './ai/ai.module';
+import { AIModule } from './ai/ai.module';
 
 @Module({
   imports: [
@@ -51,7 +51,7 @@ import { AiModule } from './ai/ai.module';
     PaymentModule,
     StsModule,
     InterviewModule,
-    AiModule,
+    AIModule,
   ],
   controllers: [AppController, WechatController, PaymentController],
   providers: [
