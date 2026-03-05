@@ -255,18 +255,40 @@ export class InterviewService {
 
       // ========== 步骤 1: 检查并扣除次数（原子操作）==========
       // ⚠️ 注意：扣费后如果后续步骤失败，会在 catch 块中自动退款
-      // TODO：后续实现
-      this.logger.log(`✅ 用户扣费成功～～`);
+
+      const user = await this.userModel.findOneAndUpdate(
+        {
+          _id: userId,
+          resumeRemainingCount: { $gt: 0 }, // 条件：必须余额 > 0
+        },
+        {
+          $inc: { resumeRemainingCount: -1 }, // 原子操作：余额 - 1
+        },
+        { new: false }, // 返回更新前的文档，用于日志记录
+      );
+
+      // 检查扣费是否成功
+      if (!user) {
+        throw new BadRequestException('简历押题次数不足，请前往充值页面购买');
+      }
+
+      // 记录详细日志
+      this.logger.log(
+        `✅ 用户扣费成功: userId=${userId}, 扣费前=${user.resumeRemainingCount}, 扣费后=${user.resumeRemainingCount - 1}`,
+      );
 
       // ========== 步骤 2: 创建消费记录（pending）==========
+
       consumptionRecord = await this.consumptionRecordModel.create({
-        recordId,
+        recordId, // 消费记录唯一ID
         user: new Types.ObjectId(userId),
         userId,
-        type: ConsumptionType.RESUME_QUIZ,
-        status: ConsumptionStatus.PENDING,
-        consumedCount: 1,
+        type: ConsumptionType.RESUME_QUIZ, // 消费类型
+        status: ConsumptionStatus.PENDING, // ⭐ 关键：标记为处理中
+        consumedCount: 1, // 消费次数
         description: `简历押题 - ${dto?.company} ${dto.positionName}`,
+
+        // 记录输入参数（用于调试和重现问题）
         inputData: {
           company: dto?.company || '',
           positionName: dto.positionName,
@@ -275,72 +297,140 @@ export class InterviewService {
           jd: dto.jd,
           resumeId: dto.resumeId,
         },
-        resultId,
+
+        resultId, // 结果ID（稍后会生成）
+
+        // 元数据（包含幂等性检查的 requestId）
         metadata: {
-          requestId: dto.requestId,
+          requestId: dto.requestId, // ← 用于幂等性检查
           promptVersion: dto.promptVersion,
         },
-        startedAt: new Date(),
+
+        startedAt: new Date(), // 记录开始时间
       });
 
-      // 定义不同阶段的提示信息
-      const progressMessages = [
-        // 0-20%: 理解阶段
-        { progress: 0.05, message: '🤖 AI 正在深度理解您的简历内容...' },
-        { progress: 0.1, message: '📊 AI 正在分析您的技术栈和项目经验...' },
-        { progress: 0.15, message: '🔍 AI 正在识别您的核心竞争力...' },
-        { progress: 0.2, message: '📋 AI 正在对比岗位要求与您的背景...' },
+      this.logger.log(`✅ 消费记录创建成功: recordId=${recordId}`);
 
-        // 20-50%: 设计问题阶段
-        { progress: 0.25, message: '💡 AI 正在设计针对性的技术问题...' },
-        { progress: 0.3, message: '🎯 AI 正在挖掘您简历中的项目亮点...' },
-        { progress: 0.35, message: '🧠 AI 正在构思场景化的面试问题...' },
-        { progress: 0.4, message: '⚡ AI 正在设计不同难度的问题组合...' },
-        { progress: 0.45, message: '🔬 AI 正在分析您的技术深度和广度...' },
-        { progress: 0.5, message: '📝 AI 正在生成基于 STAR 法则的答案...' },
+      // ========== 阶段 1: 准备阶段==========
+      this.emitProgress(
+        progressSubject,
+        0,
+        '📄 正在读取简历文档...',
+        'prepare',
+      );
+      // ========== 阶段 2: AI 生成阶段 - 分两步（10-90%）==========
+      // ===== 第一步：生成押题部分（问题 + 综合评估）10-50% =====
+      // ===== 第二步：生成匹配度分析部分，后续不在需要记录进度 =====
 
-        // 50-70%: 优化阶段
-        { progress: 0.55, message: '✨ AI 正在优化问题的表达方式...' },
-        { progress: 0.6, message: '🎨 AI 正在为您准备回答要点和技巧...' },
-        { progress: 0.65, message: '💎 AI 正在提炼您的项目成果和亮点...' },
-        { progress: 0.7, message: '🔧 AI 正在调整问题难度分布...' },
+      // 模拟一个假的 AI 响应数据，因为后面会用到
+      const aiResult: any = {};
+      // ========== 阶段 3: 保存结果阶段==========
+      const quizResult = await this.resumeQuizResultModel.create({
+        resultId,
+        user: new Types.ObjectId(userId),
+        userId,
+        resumeId: dto.resumeId,
+        company: dto?.company || '',
+        position: dto.positionName,
+        jobDescription: dto.jd,
+        questions: aiResult.questions,
+        totalQuestions: aiResult.questions.length,
+        summary: aiResult.summary,
+        // AI生成的分析报告数据
+        matchScore: aiResult.matchScore,
+        matchLevel: aiResult.matchLevel,
+        matchedSkills: aiResult.matchedSkills,
+        missingSkills: aiResult.missingSkills,
+        knowledgeGaps: aiResult.knowledgeGaps,
+        learningPriorities: aiResult.learningPriorities,
+        radarData: aiResult.radarData,
+        strengths: aiResult.strengths,
+        weaknesses: aiResult.weaknesses,
+        interviewTips: aiResult.interviewTips,
+        // 元数据
+        consumptionRecordId: recordId,
+        aiModel: 'deepseek-chat',
+        promptVersion: dto.promptVersion || 'v2',
+      });
 
-        // 70-85%: 完善阶段
-        { progress: 0.75, message: '📚 AI 正在补充技术关键词和考察点...' },
-        { progress: 0.8, message: '🎓 AI 正在完善综合评估建议...' },
-        { progress: 0.85, message: '🚀 AI 正在做最后的质量检查...' },
-        { progress: 0.9, message: '✅ AI 即将完成问题生成...' },
-      ];
+      this.logger.log(`✅ 结果保存成功: resultId=${resultId}`);
 
-      // 模拟一个定时器：每间隔一秒，响应一次数据
-      let progress = 0;
-      let currentMessage = progressMessages[0];
-      const interval = setInterval(() => {
-        progress += 1;
-        currentMessage = progressMessages[progress];
-        // 发送进度事件
-        this.emitProgress(
-          progressSubject,
-          progress,
-          currentMessage.message,
-          'generating',
-        );
-        // 简单处理，到了 progressMessages 的 length 就结束了
-        if (progress === progressMessages.length - 1) {
-          clearInterval(interval);
-          this.emitProgress(progressSubject, 100, 'AI 已完成问题生成', 'done');
+      // 更新消费记录为成功
+      await this.consumptionRecordModel.findByIdAndUpdate(
+        consumptionRecord._id,
+        {
+          $set: {
+            status: ConsumptionStatus.SUCCESS,
+            outputData: {
+              resultId,
+              questionCount: aiResult.questions.length,
+            },
+            aiModel: 'deepseek-chat',
+            promptTokens: aiResult.usage?.promptTokens,
+            completionTokens: aiResult.usage?.completionTokens,
+            totalTokens: aiResult.usage?.totalTokens,
+            completedAt: new Date(),
+          },
+        },
+      );
 
-          if (progressSubject && !progressSubject.closed) {
-            progressSubject.complete(); // 完成 Subject
-          }
-
-          return {
-            questions: [],
-            analysis: [],
-          };
-        }
-      }, 1000);
+      this.logger.log(
+        `✅ 消费记录已更新为成功状态: recordId=${consumptionRecord.recordId}`,
+      );
     } catch (error) {
+      this.logger.error(
+        `❌ 简历押题生成失败: userId=${userId}, error=${error.message}`,
+        error.stack,
+      );
+
+      // ========== 失败回滚流程 ==========
+      try {
+        // 1. 返还次数（最重要！）
+        this.logger.log(`🔄 开始退还次数: userId=${userId}`);
+        await this.refundCount(userId, 'resume');
+        this.logger.log(`✅ 次数退还成功: userId=${userId}`);
+
+        // 2. 更新消费记录为失败
+        if (consumptionRecord) {
+          await this.consumptionRecordModel.findByIdAndUpdate(
+            consumptionRecord._id,
+            {
+              $set: {
+                status: ConsumptionStatus.FAILED, // 标记为失败
+                errorMessage: error.message, // 记录错误信息
+                errorStack:
+                  process.env.NODE_ENV === 'development'
+                    ? error.stack // 开发环境记录堆栈
+                    : undefined, // 生产环境不记录（隐私考虑）
+                failedAt: new Date(),
+                isRefunded: true, // ← 标记为已退款
+                refundedAt: new Date(),
+              },
+            },
+          );
+          this.logger.log(
+            `✅ 消费记录已更新为失败状态: recordId=${consumptionRecord.recordId}`,
+          );
+        }
+      } catch (refundError) {
+        // ⚠️ 退款失败是严重问题，需要人工介入！
+        this.logger.error(
+          `🚨 退款流程失败！这是严重问题，需要人工介入！` +
+            `userId=${userId}, ` +
+            `originalError=${error.message}, ` +
+            `refundError=${refundError.message}`,
+          refundError.stack,
+        );
+
+        // TODO: 这里应该发送告警通知（钉钉、邮件等）
+        // await this.alertService.sendCriticalAlert({
+        //   type: 'REFUND_FAILED',
+        //   userId,
+        //   error: refundError.message,
+        // });
+      }
+
+      // 3. 发送错误事件给前端
       if (progressSubject && !progressSubject.closed) {
         progressSubject.next({
           type: 'error',
@@ -350,8 +440,43 @@ export class InterviewService {
         });
         progressSubject.complete();
       }
+
       throw error;
     }
+  }
+
+  /**
+   * 退还次数
+   * ⚠️ 关键方法：确保在任何失败情况下都能正确退还用户次数
+   */
+  private async refundCount(
+    userId: string,
+    type: 'resume' | 'special' | 'behavior',
+  ): Promise<void> {
+    const field =
+      type === 'resume'
+        ? 'resumeRemainingCount'
+        : type === 'special'
+          ? 'specialRemainingCount'
+          : 'behaviorRemainingCount';
+
+    // 使用原子操作退还次数
+    const result = await this.userModel.findByIdAndUpdate(
+      userId,
+      {
+        $inc: { [field]: 1 },
+      },
+      { new: true }, // 返回更新后的文档
+    );
+
+    // 验证退款是否成功
+    if (!result) {
+      throw new Error(`退款失败：用户不存在 userId=${userId}`);
+    }
+
+    this.logger.log(
+      `✅ 次数退还成功: userId=${userId}, type=${type}, 退还后=${result[field]}`,
+    );
   }
 
   /**
@@ -401,5 +526,69 @@ export class InterviewService {
       default:
         return 0;
     }
+  }
+
+  /**
+   * 不同阶段的提示信息
+   */
+  private getStagePrompt(
+    progressSubject: Subject<ProgressEvent> | undefined,
+  ): void {
+    if (!progressSubject) return;
+    // 定义不同阶段的提示信息
+    const progressMessages = [
+      // 0-20%: 理解阶段
+      { progress: 0.05, message: '🤖 AI 正在深度理解您的简历内容...' },
+      { progress: 0.1, message: '📊 AI 正在分析您的技术栈和项目经验...' },
+      { progress: 0.15, message: '🔍 AI 正在识别您的核心竞争力...' },
+      { progress: 0.2, message: '📋 AI 正在对比岗位要求与您的背景...' },
+
+      // 20-50%: 设计问题阶段
+      { progress: 0.25, message: '💡 AI 正在设计针对性的技术问题...' },
+      { progress: 0.3, message: '🎯 AI 正在挖掘您简历中的项目亮点...' },
+      { progress: 0.35, message: '🧠 AI 正在构思场景化的面试问题...' },
+      { progress: 0.4, message: '⚡ AI 正在设计不同难度的问题组合...' },
+      { progress: 0.45, message: '🔬 AI 正在分析您的技术深度和广度...' },
+      { progress: 0.5, message: '📝 AI 正在生成基于 STAR 法则的答案...' },
+
+      // 50-70%: 优化阶段
+      { progress: 0.55, message: '✨ AI 正在优化问题的表达方式...' },
+      { progress: 0.6, message: '🎨 AI 正在为您准备回答要点和技巧...' },
+      { progress: 0.65, message: '💎 AI 正在提炼您的项目成果和亮点...' },
+      { progress: 0.7, message: '🔧 AI 正在调整问题难度分布...' },
+
+      // 70-85%: 完善阶段
+      { progress: 0.75, message: '📚 AI 正在补充技术关键词和考察点...' },
+      { progress: 0.8, message: '🎓 AI 正在完善综合评估建议...' },
+      { progress: 0.85, message: '🚀 AI 正在做最后的质量检查...' },
+      { progress: 0.9, message: '✅ AI 即将完成问题生成...' },
+    ];
+
+    // 模拟一个定时器：每间隔一秒，响应一次数据
+    let progress = 0;
+    let currentMessage = progressMessages[0];
+    const interval = setInterval(() => {
+      progress += 1;
+      currentMessage = progressMessages[progress];
+      // 发送进度事件
+      this.emitProgress(
+        progressSubject,
+        progress,
+        currentMessage.message,
+        'generating',
+      );
+      // 简单处理，到了 progressMessages 的 length 就结束了
+      if (progress === progressMessages.length - 1) {
+        clearInterval(interval);
+        this.emitProgress(progressSubject, 100, 'AI 已完成问题生成', 'done');
+        if (progressSubject && !progressSubject.closed) {
+          progressSubject.complete(); // 完成 Subject
+        }
+        return {
+          questions: [],
+          analysis: [],
+        };
+      }
+    }, 1000);
   }
 }
