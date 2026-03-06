@@ -12,6 +12,8 @@ import {
 } from '../prompts/format-instructions.prompts';
 import { AIModelFactory } from '../../ai/services/ai-model.factory';
 
+const RESUME_QUIZ_QUESTION_COUNT = 3;
+
 /**
  * 简历押题输入
  */
@@ -154,18 +156,23 @@ export class InterviewAIService {
         throw new Error('AI返回的结果中 questions 不是数组');
       }
 
-      if (rawResult.questions.length < 10) {
+      if (rawResult.questions.length < RESUME_QUIZ_QUESTION_COUNT) {
         throw new Error(
-          `AI返回的问题数量不足: ${rawResult.questions.length}（应至少10个）`,
+          `AI returned too few questions: ${rawResult.questions.length} (minimum ${RESUME_QUIZ_QUESTION_COUNT})`,
         );
       }
 
+      const normalizedResult = {
+        ...rawResult,
+        questions: rawResult.questions.slice(0, RESUME_QUIZ_QUESTION_COUNT),
+      };
+
       const duration = Date.now() - startTime;
       this.logger.log(
-        `✅ [押题部分] 生成成功: 耗时=${duration}ms, 问题数=${rawResult.questions?.length || 0}`,
+        `✅ [押题部分] 生成成功: 耗时=${duration}ms, 问题数=${normalizedResult.questions?.length || 0}`,
       );
 
-      return rawResult as { questions: any[]; summary: string };
+      return normalizedResult as { questions: any[]; summary: string };
     } catch (error) {
       const duration = Date.now() - startTime;
       this.logger.error(

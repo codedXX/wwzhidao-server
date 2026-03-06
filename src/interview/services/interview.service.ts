@@ -471,6 +471,18 @@ export class InterviewService {
         '✅ 所有分析完成，正在保存结果...',
       );
 
+      if (progressSubject && !progressSubject.closed) {
+        progressSubject.next({
+          type: 'complete',
+          progress: 100,
+          label: '✅ 简历押题生成完成',
+          message: '✅ 简历押题生成完成',
+          stage: 'done',
+          data: result,
+        });
+        progressSubject.complete();
+      }
+
       return result;
     } catch (error) {
       this.logger.error(
