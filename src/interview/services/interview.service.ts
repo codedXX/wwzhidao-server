@@ -22,6 +22,7 @@ import {
   ResumeQuizResultDocument,
 } from '../schemas/interview-quiz-result.schema';
 import { DocumentParserService } from './document-parser.service';
+import { InterviewAIService } from './interview-ai.service';
 
 /**
  * 进度事件
@@ -67,6 +68,7 @@ export class InterviewService {
     private resumeAnalysisService: ResumeAnalysisService,
     private conversationContinuationService: ConversationContinuationService,
     private documentParserService: DocumentParserService,
+    private aiService: InterviewAIService,
     @InjectModel(ConsumptionRecord.name)
     private consumptionRecordModel: Model<ConsumptionRecordDocument>,
     @InjectModel(ResumeQuizResult.name)
@@ -326,12 +328,71 @@ export class InterviewService {
       this.logger.log(`✅ 简历内容提取成功: 长度=${resumeContent.length}字符`);
 
       this.emitProgress(progressSubject, 5, '✅ 简历解析完成', 'prepare');
-      // ========== 阶段 2: AI 生成阶段 - 分两步（10-90%）==========
-      // ===== 第一步：生成押题部分（问题 + 综合评估）10-50% =====
-      // ===== 第二步：生成匹配度分析部分，后续不在需要记录进度 =====
 
-      // 模拟一个假的 AI 响应数据，因为后面会用到
-      const aiResult: any = {};
+      this.emitProgress(
+        progressSubject,
+        10,
+        '🚀 准备就绪，即将开始 AI 生成...',
+      );
+      // ========== 阶段 2: AI 生成阶段 - 分两步（10-90%）==========
+      const aiStartTime = Date.now();
+
+      this.logger.log(`🤖 开始生成押题部分...`);
+      this.emitProgress(
+        progressSubject,
+        15,
+        '🤖 AI 正在理解您的简历内容并生成面试问题...',
+      );
+      // ===== 第一步：生成押题部分（问题 + 综合评估）10-50% =====
+      const questionsResult =
+        await this.aiService.generateResumeQuizQuestionsOnly({
+          company: dto?.company || '',
+          positionName: dto.positionName,
+          minSalary: dto.minSalary,
+          maxSalary: dto.maxSalary,
+          jd: dto.jd,
+          resumeContent,
+        });
+
+      this.logger.log(
+        `✅ 押题部分生成完成: 问题数=${questionsResult.questions?.length || 0}`,
+      );
+
+      this.emitProgress(
+        progressSubject,
+        50,
+        '✅ 面试问题生成完成，开始分析匹配度...',
+      );
+      // ===== 第二步：生成匹配度分析部分，后续不在需要记录进度 =====
+      this.logger.log(`🤖 开始生成匹配度分析...`);
+      this.emitProgress(
+        progressSubject,
+        60,
+        '🤖 AI 正在分析您与岗位的匹配度...',
+      );
+
+      const analysisResult =
+        await this.aiService.generateResumeQuizAnalysisOnly({
+          company: dto?.company || '',
+          positionName: dto.positionName,
+          minSalary: dto.minSalary,
+          maxSalary: dto.maxSalary,
+          jd: dto.jd,
+          resumeContent,
+        });
+
+      this.logger.log(`✅ 匹配度分析完成`);
+
+      const aiDuration = Date.now() - aiStartTime;
+      this.logger.log(
+        `⏱️ AI 总耗时: ${aiDuration}ms (${(aiDuration / 1000).toFixed(1)}秒)`,
+      );
+      // 合并两部分结果
+      const aiResult = {
+        ...questionsResult,
+        ...analysisResult,
+      };
+
       // ========== 阶段 3: 保存结果阶段==========
       const quizResult = await this.resumeQuizResultModel.create({
         resultId,
@@ -385,6 +446,32 @@ export class InterviewService {
       this.logger.log(
         `✅ 消费记录已更新为成功状态: recordId=${consumptionRecord.recordId}`,
       );
+      // ========== 阶段 4: 返回结果==========
+      const result = {
+        resultId: `result-${Date.now()}`, // 临时ID，后面会存到数据库
+        questions: questionsResult.questions,
+        summary: questionsResult.summary,
+        // 匹配度分析数据
+        matchScore: analysisResult.matchScore,
+        matchLevel: analysisResult.matchLevel,
+        matchedSkills: analysisResult.matchedSkills,
+        missingSkills: analysisResult.missingSkills,
+        knowledgeGaps: analysisResult.knowledgeGaps,
+        learningPriorities: analysisResult.learningPriorities,
+        radarData: analysisResult.radarData,
+        strengths: analysisResult.strengths,
+        weaknesses: analysisResult.weaknesses,
+        interviewTips: analysisResult.interviewTips,
+      };
+
+      // 发送完成事件
+      this.emitProgress(
+        progressSubject,
+        100,
+        '✅ 所有分析完成，正在保存结果...',
+      );
+
+      return result;
     } catch (error) {
       this.logger.error(
         `❌ 简历押题生成失败: userId=${userId}, error=${error.message}`,
@@ -589,9 +676,6 @@ export class InterviewService {
       if (progress === progressMessages.length - 1) {
         clearInterval(interval);
         this.emitProgress(progressSubject, 100, 'AI 已完成问题生成', 'done');
-        if (progressSubject && !progressSubject.closed) {
-          progressSubject.complete(); // 完成 Subject
-        }
         return {
           questions: [],
           analysis: [],
