@@ -14,6 +14,11 @@ export enum AIInterviewType {
 /**
  * STAR模型评分
  */
+
+/**
+ * 当一个类被标记为 @Schema({ _id: false }) 时，
+ * 它作为子文档嵌入到其他文档中时，不会自动生成 _id 字段
+ */
 @Schema({ _id: false })
 export class STARAnalysis {
   @Prop()
