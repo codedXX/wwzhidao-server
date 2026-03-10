@@ -42,6 +42,9 @@ export default tseslint.config(
       '@typescript-eslint/no-base-to-string': 'warn',
       '@typescript-eslint/restrict-template-expressions': 'off',
 
+      // --- 其他 ---
+      'no-useless-catch': 'off',
+
       // --- Prettier ---
       "prettier/prettier": ["error", { endOfLine: "auto" }],
     },
