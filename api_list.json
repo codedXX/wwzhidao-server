@@ -1,0 +1,100 @@
+[
+  {
+    "file": "interview.controller.ts",
+    "method": "post",
+    "path": "/interview/analyze-resume",
+    "name": "UseGuards",
+    "params": "JwtAuthGuard"
+  },
+  {
+    "file": "interview.controller.ts",
+    "method": "post",
+    "path": "/interview/continue-conversation",
+    "name": "continueConversation",
+    "params": "@Body("
+  },
+  {
+    "file": "interview.controller.ts",
+    "method": "post",
+    "path": "/interview/resume/quiz/stream",
+    "name": "UseGuards",
+    "params": "JwtAuthGuard"
+  },
+  {
+    "file": "interview.controller.ts",
+    "method": "post",
+    "path": "/interview/mock/start",
+    "name": "UseGuards",
+    "params": "JwtAuthGuard"
+  },
+  {
+    "file": "interview.controller.ts",
+    "method": "post",
+    "path": "/interview/mock/answer",
+    "name": "UseGuards",
+    "params": "JwtAuthGuard"
+  },
+  {
+    "file": "interview.controller.ts",
+    "method": "post",
+    "path": "/interview/mock/end/:resultId",
+    "name": "UseGuards",
+    "params": "JwtAuthGuard"
+  },
+  {
+    "file": "interview.controller.ts",
+    "method": "post",
+    "path": "/interview/mock/pause/:resultId",
+    "name": "UseGuards",
+    "params": "JwtAuthGuard"
+  },
+  {
+    "file": "interview.controller.ts",
+    "method": "post",
+    "path": "/interview/mock/resume/:resultId",
+    "name": "UseGuards",
+    "params": "JwtAuthGuard"
+  },
+  {
+    "file": "interview.controller.ts",
+    "method": "get",
+    "path": "/interview/analysis/report/:resultId",
+    "name": "UseGuards",
+    "params": "JwtAuthGuard"
+  },
+  {
+    "file": "user.controller.ts",
+    "method": "post",
+    "path": "/user/register",
+    "name": "Public",
+    "params": ""
+  },
+  {
+    "file": "user.controller.ts",
+    "method": "post",
+    "path": "/user/login",
+    "name": "Public",
+    "params": ""
+  },
+  {
+    "file": "user.controller.ts",
+    "method": "get",
+    "path": "/user/info",
+    "name": "getUserInfo",
+    "params": "@Request("
+  },
+  {
+    "file": "user.controller.ts",
+    "method": "put",
+    "path": "/user/profile",
+    "name": "updateUserProfile",
+    "params": "@Request("
+  },
+  {
+    "file": "user.controller.ts",
+    "method": "get",
+    "path": "/user/consumption-records",
+    "name": "UseGuards",
+    "params": "JwtAuthGuard"
+  }
+]
