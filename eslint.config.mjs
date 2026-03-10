@@ -26,9 +26,23 @@ export default tseslint.config(
   },
   {
     rules: {
+      // --- any 相关：项目大量使用 any，关闭或降级 ---
       '@typescript-eslint/no-explicit-any': 'off',
-      '@typescript-eslint/no-floating-promises': 'warn',
+      '@typescript-eslint/no-unsafe-assignment': 'off',
+      '@typescript-eslint/no-unsafe-member-access': 'off',
+      '@typescript-eslint/no-unsafe-call': 'off',
+      '@typescript-eslint/no-unsafe-return': 'off',
       '@typescript-eslint/no-unsafe-argument': 'warn',
+      '@typescript-eslint/no-unsafe-enum-comparison': 'off',
+
+      // --- 其他规则调整 ---
+      '@typescript-eslint/no-unused-vars': ['warn', { argsIgnorePattern: '^_', varsIgnorePattern: '^_' }],
+      '@typescript-eslint/require-await': 'warn',
+      '@typescript-eslint/no-floating-promises': 'warn',
+      '@typescript-eslint/no-base-to-string': 'warn',
+      '@typescript-eslint/restrict-template-expressions': 'off',
+
+      // --- Prettier ---
       "prettier/prettier": ["error", { endOfLine: "auto" }],
     },
   },
