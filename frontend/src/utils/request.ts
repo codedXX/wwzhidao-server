@@ -73,28 +73,27 @@ export function fetchSSE(
         if (done) break
 
         buffer += decoder.decode(value, { stream: true })
-        // SSE 消息是以 \n\n 分隔的
         const chunks = buffer.split('\n\n')
-        // 最后一个元素如果不是空字符串，说明是一个不完整的块，留到下一次处理
         buffer = chunks.pop() || ''
 
         for (const chunk of chunks) {
           const lines = chunk.split('\n')
-          let dataStr = ''
+          const dataLines: string[] = []
+
           for (const line of lines) {
-            if (line.startsWith('data: ')) {
-              dataStr = line.slice(6)
-              break // 取第一个 data 字段即可
+            if (line.startsWith('data:')) {
+              dataLines.push(line.slice(5).trimStart())
             }
           }
 
-          if (dataStr) {
-            try {
-              const data = JSON.parse(dataStr)
-              onMessage(data)
-            } catch (e) {
-              console.error('SSE JSON 解析错误:', e, '原始数据:', dataStr)
-            }
+          const dataStr = dataLines.join('\n')
+          if (!dataStr) continue
+
+          try {
+            const data = JSON.parse(dataStr)
+            onMessage(data)
+          } catch (e) {
+            console.error('SSE JSON 解析错误:', e, '原始数据:', dataStr)
           }
         }
       }

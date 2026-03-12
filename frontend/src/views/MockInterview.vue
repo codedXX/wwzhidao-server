@@ -3,8 +3,10 @@ import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { startMockInterview } from '../api/interview'
 import type { MockInterviewType, MockInterviewEvent } from '../api/interview'
+import { useInterviewStore } from '../store/interview'
 
 const router = useRouter()
+const interviewStore = useInterviewStore()
 
 const form = ref({
   interviewType: 'special' as MockInterviewType,
@@ -23,23 +25,42 @@ const error = ref('')
 function handleStart() {
   loading.value = true
   error.value = ''
+  interviewStore.resetOpeningStream()
+  let hasNavigated = false
 
   startMockInterview(
     form.value,
     (event: MockInterviewEvent) => {
       if (event.type === 'start' && event.sessionId) {
-        // 收到 start 事件后跳转到面试房间
-        router.push({
-          name: 'InterviewRoom',
-          params: { sessionId: event.sessionId },
-          query: {
-            resultId: event.resultId || '',
-            interviewerName: event.interviewerName || '',
-            content: event.content || '',
-            interviewType: form.value.interviewType,
-          }
+        interviewStore.updateOpeningStream({
+          sessionId: event.sessionId,
+          resultId: event.resultId,
+          interviewerName: event.interviewerName,
+          content: event.content,
+          isStreaming: event.isStreaming,
         })
+
+        if (!hasNavigated) {
+          hasNavigated = true
+          router.push({
+            name: 'InterviewRoom',
+            params: { sessionId: event.sessionId },
+            query: {
+              resultId: event.resultId || '',
+              interviewerName: event.interviewerName || '',
+              content: event.content || '',
+              interviewType: form.value.interviewType,
+            }
+          })
+        }
+
+        return
       }
+
+      if (event.type === 'waiting' && event.sessionId) {
+        interviewStore.markOpeningWaiting(event.sessionId)
+      }
+
       if (event.type === 'error') {
         error.value = event.error || '启动面试失败'
         loading.value = false
@@ -61,7 +82,6 @@ function handleStart() {
     </div>
 
     <div class="glass-card p-6 space-y-5">
-      <!-- 面试类型 -->
       <div>
         <label class="block text-sm font-medium text-slate-700 mb-3">面试类型</label>
         <div class="grid grid-cols-2 gap-4">

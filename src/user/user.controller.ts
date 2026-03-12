@@ -37,6 +37,7 @@ export class UserController {
   }
 
   @Get('info')
+  @UseGuards(JwtAuthGuard)
   async getUserInfo(@Request() req: any) {
     const { userId } = req.user;
     const userInfo = await this.userService.getUserInfo(userId);
@@ -44,6 +45,7 @@ export class UserController {
   }
 
   @Put('profile')
+  @UseGuards(JwtAuthGuard)
   async updateUserProfile(
     @Request() req: any,
     @Body() updateUserDto: UpdateUserDto,

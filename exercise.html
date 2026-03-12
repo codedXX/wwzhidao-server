@@ -1,0 +1,477 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Exercise - Product Detail</title>
+    <style>
+      :root {
+        --page-bg: #f3f3f3;
+        --surface: #ffffff;
+        --text-primary: #111111;
+        --text-secondary: #828282;
+        --divider: #d9d9d9;
+        --button-bg: #000000;
+        --button-text: #ffffff;
+        --card-radius: 8px;
+        --hero-radius: 12px;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        background: var(--page-bg);
+        color: var(--text-primary);
+      }
+
+      img {
+        display: block;
+        max-width: 100%;
+      }
+
+      a {
+        color: inherit;
+        text-decoration: none;
+      }
+
+      .page {
+        max-width: 1280px;
+        margin: 0 auto;
+        padding: 56px 40px 80px;
+      }
+
+      .nav {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 24px;
+        margin-bottom: 80px;
+      }
+
+      .brand,
+      .nav-link,
+      .footer-brand,
+      .footer-link,
+      .button,
+      .meta-price,
+      .card-title,
+      .card-price {
+        line-height: 1.5;
+      }
+
+      .brand,
+      .nav-link,
+      .footer-brand,
+      .footer-link {
+        font-size: 20px;
+      }
+
+      .nav-menu {
+        display: flex;
+        align-items: center;
+        gap: 48px;
+      }
+
+      .button {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 48px;
+        padding: 14px 24px;
+        border: 0;
+        border-radius: 8px;
+        background: var(--button-bg);
+        color: var(--button-text);
+        font-size: 16px;
+        font-weight: 500;
+      }
+
+      .hero {
+        display: grid;
+        grid-template-columns: minmax(460px, 1fr) minmax(380px, 1fr);
+        gap: 68px;
+        align-items: start;
+      }
+
+      .hero-image {
+        width: 100%;
+        aspect-ratio: 1 / 1;
+        object-fit: cover;
+        border-radius: var(--hero-radius);
+        background: #f7f7f7;
+      }
+
+      .hero-copy {
+        display: flex;
+        flex-direction: column;
+        gap: 24px;
+        padding-top: 2px;
+      }
+
+      .hero-title {
+        margin: 0;
+        font-size: 40px;
+        line-height: 1.2;
+        font-weight: 600;
+      }
+
+      .hero-subtitle,
+      .hero-description,
+      .hero-note,
+      .card-description {
+        margin: 0;
+        color: var(--text-secondary);
+      }
+
+      .hero-subtitle {
+        font-size: 24px;
+      }
+
+      .meta-price {
+        margin: 0;
+        font-size: 24px;
+        font-weight: 500;
+      }
+
+      .hero-description {
+        max-width: 420px;
+        font-size: 20px;
+        line-height: 1.5;
+      }
+
+      .hero-actions {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        width: 100%;
+        max-width: 420px;
+      }
+
+      .hero-actions .button {
+        width: 100%;
+      }
+
+      .hero-note {
+        font-size: 16px;
+        line-height: 1.5;
+      }
+
+      .section {
+        margin-top: 76px;
+      }
+
+      .section-title {
+        margin: 0 0 28px;
+        font-size: 32px;
+        line-height: 1.2;
+        font-weight: 600;
+      }
+
+      .products-grid {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 40px 16px;
+      }
+
+      .card {
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+      }
+
+      .card-image {
+        width: 100%;
+        aspect-ratio: 404 / 242;
+        object-fit: cover;
+        border-radius: var(--card-radius);
+        background: #f7f7f7;
+      }
+
+      .card-copy {
+        display: grid;
+        gap: 4px;
+      }
+
+      .card-title,
+      .card-price {
+        margin: 0;
+        font-size: 20px;
+        font-weight: 500;
+      }
+
+      .card-description {
+        margin: 0;
+        font-size: 20px;
+        line-height: 1.5;
+      }
+
+      .footer {
+        margin-top: 72px;
+        padding-top: 28px;
+        border-top: 1px solid var(--divider);
+      }
+
+      .footer-inner {
+        display: grid;
+        grid-template-columns: 1.4fr repeat(3, minmax(120px, 1fr));
+        gap: 40px;
+        align-items: start;
+      }
+
+      .footer-brand-block {
+        display: flex;
+        flex-direction: column;
+        gap: 44px;
+      }
+
+      .socials {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+      }
+
+      .socials img {
+        width: 16px;
+        height: 16px;
+      }
+
+      .footer-column {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+      }
+
+      .footer-topic {
+        margin: 0 0 4px;
+        font-size: 12px;
+        line-height: 1.5;
+        font-weight: 700;
+        text-transform: none;
+      }
+
+      .footer-link {
+        color: #444444;
+      }
+
+      @media (max-width: 1024px) {
+        .page {
+          padding-inline: 24px;
+        }
+
+        .hero {
+          grid-template-columns: 1fr;
+          gap: 36px;
+        }
+
+        .hero-copy,
+        .hero-description,
+        .hero-actions {
+          max-width: none;
+        }
+
+        .products-grid {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+
+        .footer-inner {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+      }
+
+      @media (max-width: 720px) {
+        .page {
+          padding: 28px 16px 48px;
+        }
+
+        .nav {
+          flex-direction: column;
+          align-items: flex-start;
+          margin-bottom: 40px;
+        }
+
+        .nav-menu {
+          flex-wrap: wrap;
+          gap: 16px 24px;
+        }
+
+        .brand,
+        .nav-link,
+        .footer-brand,
+        .footer-link {
+          font-size: 16px;
+        }
+
+        .hero {
+          grid-template-columns: 1fr;
+        }
+
+        .hero-title {
+          font-size: 32px;
+        }
+
+        .hero-subtitle,
+        .meta-price,
+        .hero-description,
+        .card-title,
+        .card-description,
+        .card-price {
+          font-size: 18px;
+        }
+
+        .section {
+          margin-top: 56px;
+        }
+
+        .section-title {
+          margin-bottom: 20px;
+          font-size: 28px;
+        }
+
+        .products-grid,
+        .footer-inner {
+          grid-template-columns: 1fr;
+        }
+
+        .footer-brand-block {
+          gap: 24px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="page">
+      <header class="nav">
+        <div class="brand">Site name</div>
+        <nav class="nav-menu" aria-label="Primary navigation">
+          <a class="nav-link" href="#">Page</a>
+          <a class="nav-link" href="#">Page</a>
+          <a class="nav-link" href="#">Page</a>
+          <a class="button" href="#">Button</a>
+        </nav>
+      </header>
+
+      <section class="hero" aria-labelledby="product-title">
+        <img
+          class="hero-image"
+          src="https://www.figma.com/api/mcp/asset/73fad80e-dc46-47fa-b290-68e3e3c64d83"
+          alt="Product image"
+        />
+
+        <div class="hero-copy">
+          <h1 class="hero-title" id="product-title">Product name</h1>
+          <p class="hero-subtitle">Subheading</p>
+          <p class="meta-price">$10.99</p>
+          <p class="hero-description">
+            Body text for describing what this product is and why this product is simply a must-buy.
+          </p>
+          <div class="hero-actions">
+            <a class="button" href="#">Add to cart</a>
+            <p class="hero-note">Text box for additional details or fine print</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="section" aria-labelledby="related-products-title">
+        <h2 class="section-title" id="related-products-title">Related products</h2>
+
+        <div class="products-grid">
+          <article class="card">
+            <img class="card-image" src="https://www.figma.com/api/mcp/asset/aa1a431f-63d4-4187-97ce-74fb5bca624a" alt="First related product" />
+            <div class="card-copy">
+              <h3 class="card-title">Product</h3>
+              <p class="card-description">Description of first product</p>
+              <p class="card-price">$10.99</p>
+            </div>
+          </article>
+
+          <article class="card">
+            <img class="card-image" src="https://www.figma.com/api/mcp/asset/c88436e8-6f36-4f71-9ec0-72905a1cdc4d" alt="Second related product" />
+            <div class="card-copy">
+              <h3 class="card-title">Product</h3>
+              <p class="card-description">Description of second product</p>
+              <p class="card-price">$10.99</p>
+            </div>
+          </article>
+
+          <article class="card">
+            <img class="card-image" src="https://www.figma.com/api/mcp/asset/870db2d3-7112-4c22-9409-35c2d3cee994" alt="Third related product" />
+            <div class="card-copy">
+              <h3 class="card-title">Product</h3>
+              <p class="card-description">Description of third product</p>
+              <p class="card-price">$10.99</p>
+            </div>
+          </article>
+
+          <article class="card">
+            <img class="card-image" src="https://www.figma.com/api/mcp/asset/2a4a2714-1cd9-4b46-820c-93daf28d4e0d" alt="Fourth related product" />
+            <div class="card-copy">
+              <h3 class="card-title">Product</h3>
+              <p class="card-description">Description of fourth product</p>
+              <p class="card-price">$10.99</p>
+            </div>
+          </article>
+
+          <article class="card">
+            <img class="card-image" src="https://www.figma.com/api/mcp/asset/baf01844-3760-41c5-a91c-65c7520142d7" alt="Fifth related product" />
+            <div class="card-copy">
+              <h3 class="card-title">Product</h3>
+              <p class="card-description">Description of fifth product</p>
+              <p class="card-price">$10.99</p>
+            </div>
+          </article>
+
+          <article class="card">
+            <img class="card-image" src="https://www.figma.com/api/mcp/asset/e7c53990-a1d5-4dab-a028-479c885bc161" alt="Sixth related product" />
+            <div class="card-copy">
+              <h3 class="card-title">Product</h3>
+              <p class="card-description">Description of sixth product</p>
+              <p class="card-price">$10.99</p>
+            </div>
+          </article>
+        </div>
+      </section>
+
+      <footer class="footer">
+        <div class="footer-inner">
+          <div class="footer-brand-block">
+            <div class="footer-brand">Site name</div>
+            <div class="socials" aria-label="Social media links">
+              <a href="#" aria-label="Facebook"><img src="https://www.figma.com/api/mcp/asset/fd632739-e514-49c0-a3d9-6aad89c18913" alt="" /></a>
+              <a href="#" aria-label="LinkedIn"><img src="https://www.figma.com/api/mcp/asset/95bd39b9-be05-4a14-bb64-f4179642f521" alt="" /></a>
+              <a href="#" aria-label="YouTube"><img src="https://www.figma.com/api/mcp/asset/ff092883-f396-4b1f-8c0f-072c961e637e" alt="" /></a>
+              <a href="#" aria-label="Instagram"><img src="https://www.figma.com/api/mcp/asset/426910d8-6884-46bb-b3be-923a9da3833c" alt="" /></a>
+            </div>
+          </div>
+
+          <div class="footer-column">
+            <p class="footer-topic">Topic</p>
+            <a class="footer-link" href="#">Page</a>
+            <a class="footer-link" href="#">Page</a>
+            <a class="footer-link" href="#">Page</a>
+            <a class="footer-link" href="#">Page</a>
+          </div>
+
+          <div class="footer-column">
+            <p class="footer-topic">Topic</p>
+            <a class="footer-link" href="#">Page</a>
+            <a class="footer-link" href="#">Page</a>
+            <a class="footer-link" href="#">Page</a>
+            <a class="footer-link" href="#">Page</a>
+          </div>
+
+          <div class="footer-column">
+            <p class="footer-topic">Topic</p>
+            <a class="footer-link" href="#">Page</a>
+            <a class="footer-link" href="#">Page</a>
+            <a class="footer-link" href="#">Page</a>
+            <a class="footer-link" href="#">Page</a>
+          </div>
+        </div>
+      </footer>
+    </main>
+  </body>
+</html>
