@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted, nextTick, watch } from 'vue'
+import { ref, onMounted, onUnmounted, nextTick, watch, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { answerMockInterview, endMockInterview, pauseMockInterview, resumeMockInterview as resumeInterviewApi } from '../api/interview'
 import type { MockInterviewEvent } from '../api/interview'
@@ -33,6 +33,14 @@ const chatContainer = ref<HTMLElement | null>(null)
 const referenceAnswer = ref('')
 const showReference = ref(false)
 const openingMessageIndex = ref<number | null>(null)
+
+const interviewStatus = computed(() => {
+  if (isEnded.value) return { text: '已结束', classes: 'bg-primary-50 text-primary-600' }
+  if (isPaused.value) return { text: '已暂停', classes: 'bg-amber-50 text-amber-600' }
+  if (isThinking.value) return { text: '正在思考', classes: 'bg-violet-50 text-violet-600' }
+  if (isWaiting.value) return { text: '等待作答', classes: 'bg-emerald-50 text-emerald-600' }
+  return { text: '连接中', classes: 'bg-slate-100 text-slate-600' }
+})
 
 let controller: AbortController | null = null
 
@@ -233,20 +241,21 @@ function viewReport() {
 
 <template>
   <div class="flex h-[calc(100vh-8rem)] min-h-0 flex-col animate-fade-in">
-    <div class="mb-4 flex shrink-0 items-center justify-between gap-4">
+    <div class="mb-4 flex shrink-0 flex-wrap items-start justify-between gap-4">
       <div class="flex items-center gap-4">
         <div class="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-primary-500 to-primary-600 font-bold text-white shadow-lg">
           面
         </div>
         <div>
           <h3 class="font-bold text-slate-800">{{ interviewerName }}</h3>
-          <p class="text-xs text-slate-500">
-            第 {{ questionNumber }} 题 / 约 {{ totalQuestions }} 题
-            <span v-if="elapsedMinutes"> · 已用 {{ elapsedMinutes }} 分钟</span>
-          </p>
+          <div class="mt-1 flex flex-wrap items-center gap-2 text-xs text-slate-500">
+            <span>第 {{ questionNumber }} 题 / 约 {{ totalQuestions }} 题</span>
+            <span v-if="elapsedMinutes">· 已用 {{ elapsedMinutes }} 分钟</span>
+            <span class="rounded-full px-2 py-0.5 font-medium" :class="interviewStatus.classes">{{ interviewStatus.text }}</span>
+          </div>
         </div>
       </div>
-      <div class="flex items-center gap-2">
+      <div class="flex flex-wrap items-center justify-end gap-2">
         <button v-if="!isEnded && !isPaused" @click="handlePause" class="btn-secondary px-3 py-1.5 text-xs">⏸ 暂停</button>
         <button v-if="isPaused" @click="handleResume" class="btn-primary px-3 py-1.5 text-xs">▶️ 继续</button>
         <button v-if="!isEnded" @click="handleEnd" class="rounded-lg px-3 py-1.5 text-xs text-red-500 transition-colors hover:bg-red-50">结束面试</button>
@@ -311,7 +320,7 @@ function viewReport() {
           v-model="userInput"
           @keydown.enter.exact.prevent="sendAnswer"
           class="input-field min-h-[48px] max-h-32 flex-1 resize-none"
-          :placeholder="isWaiting ? '请输入你的回答...' : '等待面试官提问...'"
+          :placeholder="isWaiting ? '请输入你的回答（Enter 发送）...' : '等待面试官提问...'"
           :disabled="isThinking || !isWaiting"
         ></textarea>
         <button
