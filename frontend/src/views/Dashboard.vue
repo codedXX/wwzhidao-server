@@ -1,6 +1,6 @@
 <script setup lang="ts">
+import { computed, onMounted } from 'vue'
 import { useUserStore } from '../store/user'
-import { onMounted } from 'vue'
 
 const userStore = useUserStore()
 
@@ -12,97 +12,150 @@ const features = [
   {
     icon: '📝',
     title: '简历押题',
-    desc: '基于你的简历和 JD 智能生成面试题',
+    desc: '基于简历和 JD 生成高频题，适合面前快速热身。',
     path: '/resume-quiz',
-    gradient: 'from-blue-500 to-cyan-500',
+    gradient: 'from-sky-500 via-cyan-500 to-blue-600',
     remaining: () => userStore.user?.resumeQuizRemainingCount || 0,
+    accent: 'bg-sky-50 text-sky-700',
   },
   {
     icon: '🎯',
     title: '专项面试',
-    desc: '深度技术面试模拟，AI 面试官一对一',
+    desc: '围绕目标岗位深挖技术细节，适合系统性训练。',
     path: '/mock-interview',
-    gradient: 'from-primary-500 to-purple-500',
+    gradient: 'from-primary-500 via-violet-500 to-fuchsia-600',
     remaining: () => userStore.user?.specialRemainingCount || 0,
+    accent: 'bg-violet-50 text-violet-700',
   },
   {
     icon: '💼',
     title: '综合面试',
-    desc: '行为面试 + HR 面试全流程模拟',
+    desc: '聚焦项目表达、行为面和 HR 提问，提升表达与临场感。',
     path: '/mock-interview',
-    gradient: 'from-emerald-500 to-teal-500',
+    gradient: 'from-emerald-500 via-teal-500 to-cyan-600',
     remaining: () => userStore.user?.behaviorRemainingCount || 0,
+    accent: 'bg-emerald-50 text-emerald-700',
   },
 ]
+
+const stats = computed(() => [
+  {
+    label: '押题次数',
+    value: userStore.user?.resumeQuizRemainingCount || 0,
+    tone: 'text-sky-600',
+  },
+  {
+    label: '专项面试',
+    value: userStore.user?.specialRemainingCount || 0,
+    tone: 'text-violet-600',
+  },
+  {
+    label: '综合面试',
+    value: userStore.user?.behaviorRemainingCount || 0,
+    tone: 'text-emerald-600',
+  },
+])
 </script>
 
 <template>
-  <div class="space-y-8 animate-fade-in">
-    <!-- 欢迎横幅 -->
-    <div class="bg-gradient-to-r from-primary-500 via-primary-600 to-purple-600 rounded-2xl p-8 text-white relative overflow-hidden">
-      <div class="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full blur-2xl translate-x-1/3 -translate-y-1/3"></div>
-      <div class="relative z-10">
-        <h2 class="text-2xl font-bold">你好，{{ userStore.user?.username || '同学' }} 👋</h2>
-        <p class="text-primary-100 mt-2 text-lg">准备好今天的面试练习了吗？让 AI 助你一臂之力！</p>
+  <div class="page-shell">
+    <section class="page-hero">
+      <div class="relative z-10 max-w-3xl">
+        <div class="mb-4 flex flex-wrap gap-2 text-primary-100">
+          <span class="badge-pill">AI 面试助手</span>
+          <span class="badge-pill">个性化提问</span>
+          <span class="badge-pill">实时反馈</span>
+        </div>
+        <h2 class="text-3xl font-bold tracking-tight sm:text-4xl">你好，{{ userStore.user?.username || '同学' }}，今天准备攻克哪一类面试？</h2>
+        <p class="mt-4 max-w-2xl text-sm leading-7 text-slate-200 sm:text-base">
+          用一套更接近真实面试现场的练习流程，快速进入状态：先热身、再专项、最后复盘。
+        </p>
       </div>
-    </div>
+    </section>
 
-    <!-- 功能卡片 -->
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-      <router-link
-        v-for="feature in features"
-        :key="feature.title"
-        :to="feature.path"
-        class="glass-card p-6 card-hover group cursor-pointer block"
-      >
-        <div
-          class="w-14 h-14 rounded-xl flex items-center justify-center mb-4 text-2xl bg-gradient-to-br shadow-lg transition-transform duration-300 group-hover:scale-110"
-          :class="feature.gradient"
+    <section class="grid gap-4 sm:grid-cols-3">
+      <div v-for="item in stats" :key="item.label" class="metric-card">
+        <p class="text-sm text-slate-500">{{ item.label }}</p>
+        <p class="mt-3 text-3xl font-bold" :class="item.tone">{{ item.value }}</p>
+      </div>
+    </section>
+
+    <section>
+      <div class="mb-4 flex items-end justify-between gap-4">
+        <div>
+          <h3 class="section-title">开始训练</h3>
+          <p class="section-caption">三种练习模式覆盖热身、深挖和综合表达。</p>
+        </div>
+      </div>
+      <div class="grid gap-6 md:grid-cols-3">
+        <router-link
+          v-for="feature in features"
+          :key="feature.title"
+          :to="feature.path"
+          class="glass-card card-hover group block overflow-hidden p-6"
         >
-          <span class="brightness-0 invert">{{ feature.icon }}</span>
-        </div>
-        <h3 class="text-lg font-bold text-slate-800 mb-1">{{ feature.title }}</h3>
-        <p class="text-sm text-slate-500 mb-3">{{ feature.desc }}</p>
-        <div class="flex items-center justify-between">
-          <span class="text-xs text-slate-400">剩余次数</span>
-          <span class="text-lg font-bold text-primary-600">{{ feature.remaining() }}</span>
-        </div>
-      </router-link>
-    </div>
+          <div class="flex items-start justify-between gap-4">
+            <div class="flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br text-2xl shadow-lg" :class="feature.gradient">
+              <span class="brightness-0 invert">{{ feature.icon }}</span>
+            </div>
+            <span class="rounded-full px-3 py-1 text-xs font-semibold" :class="feature.accent">剩余 {{ feature.remaining() }} 次</span>
+          </div>
+          <h4 class="mt-6 text-xl font-semibold text-slate-900">{{ feature.title }}</h4>
+          <p class="mt-2 text-sm leading-6 text-slate-500">{{ feature.desc }}</p>
+          <div class="mt-6 flex items-center gap-2 text-sm font-medium text-primary-600">
+            <span>立即进入</span>
+            <span class="transition-transform duration-300 group-hover:translate-x-1">→</span>
+          </div>
+        </router-link>
+      </div>
+    </section>
 
-    <!-- 快速提示 -->
-    <div class="glass-card p-6">
-      <h3 class="text-lg font-bold text-slate-800 mb-4">💡 使用技巧</h3>
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div class="flex items-start gap-3 p-3 rounded-xl bg-blue-50/50">
-          <span class="text-xl">📄</span>
-          <div>
-            <p class="text-sm font-medium text-slate-700">准备好简历</p>
-            <p class="text-xs text-slate-500">上传你的简历，AI 会根据简历内容生成定制化面试题</p>
+    <section class="grid gap-6 xl:grid-cols-[1.1fr_0.9fr]">
+      <div class="surface-card p-6">
+        <h3 class="section-title">推荐练习路径</h3>
+        <p class="section-caption mt-2">按照这条路径练习，体验会更接近真实求职节奏。</p>
+        <div class="mt-6 space-y-4">
+          <div class="flex items-start gap-4 rounded-2xl bg-slate-50/80 p-4">
+            <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-sky-100 text-sky-700">1</div>
+            <div>
+              <p class="font-semibold text-slate-800">先做简历押题</p>
+              <p class="mt-1 text-sm leading-6 text-slate-500">快速摸清高频问题和知识盲点，建立提问预期。</p>
+            </div>
           </div>
-        </div>
-        <div class="flex items-start gap-3 p-3 rounded-xl bg-purple-50/50">
-          <span class="text-xl">🎯</span>
-          <div>
-            <p class="text-sm font-medium text-slate-700">填写职位信息</p>
-            <p class="text-xs text-slate-500">提供公司名称和 JD，获得更精准的面试模拟</p>
+          <div class="flex items-start gap-4 rounded-2xl bg-slate-50/80 p-4">
+            <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-violet-100 text-violet-700">2</div>
+            <div>
+              <p class="font-semibold text-slate-800">再做专项深挖</p>
+              <p class="mt-1 text-sm leading-6 text-slate-500">围绕岗位核心能力做系统化追问，更适合冲刺准备。</p>
+            </div>
           </div>
-        </div>
-        <div class="flex items-start gap-3 p-3 rounded-xl bg-green-50/50">
-          <span class="text-xl">⏱</span>
-          <div>
-            <p class="text-sm font-medium text-slate-700">模拟真实面试环境</p>
-            <p class="text-xs text-slate-500">专项面试约 2 小时，综合面试约 2 小时</p>
-          </div>
-        </div>
-        <div class="flex items-start gap-3 p-3 rounded-xl bg-amber-50/50">
-          <span class="text-xl">📊</span>
-          <div>
-            <p class="text-sm font-medium text-slate-700">查看分析报告</p>
-            <p class="text-xs text-slate-500">面试结束后获取 AI 多维评估和改进建议</p>
+          <div class="flex items-start gap-4 rounded-2xl bg-slate-50/80 p-4">
+            <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-100 text-emerald-700">3</div>
+            <div>
+              <p class="font-semibold text-slate-800">最后看报告复盘</p>
+              <p class="mt-1 text-sm leading-6 text-slate-500">从回答完整度、表达逻辑和岗位匹配度三个维度回看表现。</p>
+            </div>
           </div>
         </div>
       </div>
-    </div>
+
+      <div class="surface-card p-6">
+        <h3 class="section-title">练习建议</h3>
+        <div class="mt-5 space-y-4 text-sm leading-6 text-slate-600">
+          <div class="rounded-2xl border border-slate-200/70 bg-white/70 p-4">
+            <p class="font-medium text-slate-800">用具体项目讲故事</p>
+            <p class="mt-1">回答时尽量带上项目背景、目标、你的动作和最终结果。</p>
+          </div>
+          <div class="rounded-2xl border border-slate-200/70 bg-white/70 p-4">
+            <p class="font-medium text-slate-800">控制回答节奏</p>
+            <p class="mt-1">先给结论，再补细节，会让整体表达更有层次。</p>
+          </div>
+          <div class="rounded-2xl border border-slate-200/70 bg-white/70 p-4">
+            <p class="font-medium text-slate-800">把弱项留到复盘解决</p>
+            <p class="mt-1">碰到不会的问题先组织思路，报告页再专门回看和整理。</p>
+          </div>
+        </div>
+      </div>
+    </section>
   </div>
 </template>

@@ -86,7 +86,7 @@ const navItems = [
     ></div>
 
     <aside
-      class="fixed inset-y-0 left-0 z-30 flex w-64 flex-col border-r border-slate-200/60 bg-white/88 shadow-xl backdrop-blur-xl transition-transform duration-300 lg:static lg:z-auto lg:translate-x-0 lg:shadow-sm"
+      class="fixed inset-y-0 left-0 z-30 flex w-64 flex-col border-r border-slate-200/60 bg-white/90 shadow-xl backdrop-blur-xl transition-transform duration-300 lg:static lg:z-auto lg:translate-x-0 lg:shadow-sm"
       :class="sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'"
     >
       <div class="border-b border-slate-100 p-6">
@@ -134,7 +134,7 @@ const navItems = [
     </aside>
 
     <main class="min-w-0 flex-1 overflow-auto">
-      <header class="sticky top-0 z-10 flex flex-wrap items-center justify-between gap-3 border-b border-slate-200/60 bg-white/78 px-4 py-4 backdrop-blur-lg sm:px-6 lg:px-8">
+      <header class="sticky top-0 z-10 flex flex-wrap items-center justify-between gap-3 border-b border-slate-200/60 bg-white/80 px-4 py-4 backdrop-blur-lg sm:px-6 lg:px-8">
         <button @click="sidebarOpen = !sidebarOpen" class="rounded-lg p-2 text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-700">
           <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
