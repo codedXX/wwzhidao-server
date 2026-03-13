@@ -46,19 +46,19 @@ function handleLogout() {
 const navItems = [
   {
     name: '控制台',
-    path: '/',
+    path: '/dashboard',
     icon: '📊',
     isActive: () => route.name === 'Dashboard',
   },
   {
     name: '简历押题',
-    path: '/resume-quiz',
+    path: '/resumeQuiz',
     icon: '📝',
     isActive: () => route.name === 'ResumeQuiz',
   },
   {
     name: '模拟面试',
-    path: '/mock-interview',
+    path: '/mockInterview',
     icon: '🎤',
     isActive: () => ['MockInterview', 'InterviewRoom'].includes(String(route.name || '')),
   },

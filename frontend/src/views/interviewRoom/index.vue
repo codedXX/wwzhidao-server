@@ -1,9 +1,9 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted, nextTick, watch, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { answerMockInterview, endMockInterview, pauseMockInterview, resumeMockInterview as resumeInterviewApi } from '../api/interview'
-import type { MockInterviewEvent } from '../api/interview'
-import { useInterviewStore } from '../store/interview'
+import { answerMockInterview, endMockInterview, pauseMockInterview, resumeMockInterview as resumeInterviewApi } from '../../api/interview'
+import type { MockInterviewEvent } from '../../api/interview'
+import { useInterviewStore } from '../../store/interview'
 
 const route = useRoute()
 const router = useRouter()

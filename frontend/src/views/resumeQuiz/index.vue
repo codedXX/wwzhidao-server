@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
-import { resumeQuizStream } from '../api/interview'
-import type { ProgressEvent } from '../api/interview'
+import { resumeQuizStream } from '../../api/interview'
+import type { ProgressEvent } from '../../api/interview'
 import { useRouter } from 'vue-router'
 
 const router = useRouter()

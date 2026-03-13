@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
 import { useRoute } from 'vue-router'
-import { getAnalysisReport } from '../api/interview'
+import { getAnalysisReport } from '../../api/interview'
 
 const route = useRoute()
 const resultId = route.params.resultId as string

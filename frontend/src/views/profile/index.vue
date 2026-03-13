@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
-import { useUserStore } from '../store/user'
-import { updateUserProfile } from '../api/user'
+import { useUserStore } from '../../store/user'
+import { updateUserProfile } from '../../api/user'
 
 const userStore = useUserStore()
 

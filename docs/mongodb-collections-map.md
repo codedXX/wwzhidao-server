@@ -1,0 +1,803 @@
+# wwzhidao-server MongoDB 5个集合字段说明
+
+> 这份文档尽量按 XMind 的阅读方式来排版：根节点 -> 集合 -> 字段 -> 子字段。
+
+## 根节点
+
+- `wwzhidao-server MongoDB 5个集合字段说明`
+  - 说明：按代码里的 5 个顶层 Mongoose schema / model 整理
+  - 说明：代码没有显式配置 `collection` 名时，MongoDB 实际集合名由 Mongoose 默认推导
+  - 说明：顶层文档默认包含 `_id`
+  - 说明：使用 `@Schema({ _id: false })` 的子文档不会单独生成 `_id`
+
+---
+
+## 1. `User`
+
+- 定位：`src/user/schemas/user.schema.ts`
+- 用途：用户主档，保存账号、身份、额度、会员和微信绑定信息
+- 备注：这是用户核心集合
+
+### 字段脑图展开
+
+- `User`
+  - `_id`
+    - 类型：`ObjectId`
+    - 说明：MongoDB 文档主键，自动生成
+  - `username`
+    - 类型：`string`
+    - 说明：用户名，注册登录的基础身份字段
+  - `wechatId`
+    - 类型：`string`
+    - 说明：微信登录标识，代码注释里定义为微信登录唯一标识
+  - `email`
+    - 类型：`string`
+    - 说明：邮箱，可用于注册、登录等场景
+  - `phone`
+    - 类型：`string`
+    - 说明：手机号
+  - `avatar`
+    - 类型：`string`
+    - 说明：用户头像地址
+  - `roles`
+    - 类型：`string[]`
+    - 说明：角色数组，默认是 `['user']`，支持后续扩展多角色权限
+  - `isActive`
+    - 类型：`boolean`
+    - 说明：账号是否已激活
+  - `password`
+    - 类型：`string`
+    - 说明：登录密码；保存前会通过 `pre('save')` 做 `bcrypt` 哈希，不是明文
+  - `realName`
+    - 类型：`string`
+    - 说明：真实姓名
+  - `gender`
+    - 类型：`'male' | 'female' | 'other'`
+    - 说明：性别，默认 `other`
+  - `idCard`
+    - 类型：`string`
+    - 说明：身份证号
+  - `isVerified`
+    - 类型：`boolean`
+    - 说明：是否完成实名认证
+  - `birthDate`
+    - 类型：`Date`
+    - 说明：出生日期
+  - `isVip`
+    - 类型：`boolean`
+    - 说明：是否为会员
+  - `vipExpireTime`
+    - 类型：`Date`
+    - 说明：会员过期时间
+  - `aiInterviewRemainingCount`
+    - 类型：`number`
+    - 说明：AI 模拟面试剩余次数
+  - `aiInterviewRemainingMinutes`
+    - 类型：`number`
+    - 说明：AI 模拟面试剩余时长，单位分钟
+  - `wwCoinBalance`
+    - 类型：`number`
+    - 说明：旺旺币余额
+  - `resumeRemainingCount`
+    - 类型：`number`
+    - 说明：简历押题剩余次数；发起简历押题前会先扣减，失败时会回滚
+  - `specialRemainingCount`
+    - 类型：`number`
+    - 说明：专项面试剩余次数
+  - `behaviorRemainingCount`
+    - 类型：`number`
+    - 说明：综合面试剩余次数
+  - `lastLoginTime`
+    - 类型：`Date`
+    - 说明：最近登录时间
+  - `lastLoginLocation`
+    - 类型：`string`
+    - 说明：最近登录地点
+  - `openid`
+    - 类型：`string`
+    - 说明：微信小程序 `openid`，唯一且 sparse
+  - `unionid`
+    - 类型：`string`
+    - 说明：微信开放平台统一标识 `unionid`，唯一且 sparse
+  - `wechatNickname`
+    - 类型：`string`
+    - 说明：微信昵称
+  - `wechatAvatar`
+    - 类型：`string`
+    - 说明：微信头像地址
+  - `isWechatBound`
+    - 类型：`boolean`
+    - 说明：是否已绑定微信
+  - `wechatBoundTime`
+    - 类型：`Date`
+    - 说明：微信绑定时间
+  - `createdAt`
+    - 类型：`Date`
+    - 说明：创建时间，来自 `timestamps: true`
+  - `updatedAt`
+    - 类型：`Date`
+    - 说明：最后更新时间，来自 `timestamps: true`
+
+---
+
+## 2. `UserConsumption`
+
+- 定位：`src/user/schemas/consumption-record.schema.ts`
+- 用途：轻量级用户消费记录，主要记录次数/来源级别的消费流水
+- 备注：它和 interview 模块里的 `ConsumptionRecord` 不是同一个集合
+
+### 字段脑图展开
+
+- `UserConsumption`
+  - `_id`
+    - 类型：`ObjectId`
+    - 说明：MongoDB 文档主键，自动生成
+  - `userId`
+    - 类型：`ObjectId(string)`
+    - 说明：关联用户 ID，`ref: 'User'`
+  - `type`
+    - 类型：`'interview' | 'quiz' | 'other'`
+    - 说明：消费类型，默认 `interview`
+  - `quantity`
+    - 类型：`number`
+    - 说明：消费数量，可以表示次数，也可以表示金额
+  - `source`
+    - 类型：`'free' | 'paid'`
+    - 说明：消费来源，表示来自免费额度还是付费购买
+  - `relatedId`
+    - 类型：`string`
+    - 说明：关联业务 ID，例如某次面试、某次押题结果
+  - `description`
+    - 类型：`string`
+    - 说明：消费说明
+  - `success`
+    - 类型：`boolean`
+    - 说明：消费是否成功
+  - `createdAt`
+    - 类型：`Date`
+    - 说明：创建时间，来自 `timestamps: true`
+  - `updatedAt`
+    - 类型：`Date`
+    - 说明：最后更新时间，来自 `timestamps: true`
+
+---
+
+## 3. `ConsumptionRecord`
+
+- 定位：`src/interview/schemas/consumption-record.schema.ts`
+- 用途：面试/押题业务的正式消费流水，记录扣费、AI 输入输出、状态、失败与退款信息
+- 备注：用户消费统计接口实际查询的是这个集合
+
+### 字段脑图展开
+
+- `ConsumptionRecord`
+  - `_id`
+    - 类型：`ObjectId`
+    - 说明：MongoDB 文档主键，自动生成
+  - `recordId`
+    - 类型：`string`
+    - 说明：业务层消费记录唯一 ID，代码里用 `uuid` 生成，且 `unique`
+  - `user`
+    - 类型：`ObjectId`
+    - 说明：关联 `User` 文档的 ObjectId
+  - `userId`
+    - 类型：`string`
+    - 说明：用户 ID 的字符串形式，便于查询、聚合和接口筛选
+  - `type`
+    - 类型：`'resume_quiz' | 'special_interview' | 'behavior_interview' | 'ai_interview'`
+    - 说明：消费类型
+  - `status`
+    - 类型：`'pending' | 'success' | 'failed' | 'cancelled'`
+    - 说明：消费状态，分别表示处理中、成功、失败、已取消
+  - `consumedCount`
+    - 类型：`number`
+    - 说明：本次实际消耗次数，通常为 1
+  - `description`
+    - 类型：`string`
+    - 说明：消费描述，例如“简历押题 - 公司 岗位”
+  - `createdAt`
+    - 类型：`Date`
+    - 说明：文档创建时间；schema 使用了 `timestamps`
+  - `inputData`
+    - 类型：`Record<string, any>`
+    - 说明：业务入参快照，便于排查问题和复现请求
+    - 常见子字段（简历押题）
+      - `company`：目标公司
+      - `positionName`：岗位名称
+      - `minSalary`：最低薪资
+      - `maxSalary`：最高薪资
+      - `jd`：职位描述
+      - `resumeId`：简历 ID
+    - 常见子字段（模拟面试）
+      - `company`：目标公司
+      - `position`：岗位名称
+      - `interviewType`：面试类型
+  - `outputData`
+    - 类型：`Record<string, any>`
+    - 说明：业务产出摘要
+    - 常见子字段（简历押题）
+      - `resultId`：生成结果 ID
+      - `questionCount`：生成题目数量
+    - 常见子字段（模拟面试）
+      - `resultId`：面试结果 ID
+      - `sessionId`：会话 ID
+  - `resultId`
+    - 类型：`string`
+    - 说明：关联结果 ID，例如 `ResumeQuizResult.resultId` 或 `AIInterviewResult.resultId`
+  - `aiModel`
+    - 类型：`string`
+    - 说明：本次调用使用的 AI 模型名
+  - `promptTokens`
+    - 类型：`number`
+    - 说明：输入 token 数
+  - `completionTokens`
+    - 类型：`number`
+    - 说明：输出 token 数
+  - `totalTokens`
+    - 类型：`number`
+    - 说明：总 token 数
+  - `estimatedCost`
+    - 类型：`number`
+    - 说明：预估成本
+  - `aiResponseTime`
+    - 类型：`number`
+    - 说明：AI 响应耗时
+  - `startedAt`
+    - 类型：`Date`
+    - 说明：业务处理开始时间
+  - `completedAt`
+    - 类型：`Date`
+    - 说明：业务处理完成时间
+  - `failedAt`
+    - 类型：`Date`
+    - 说明：业务处理失败时间
+  - `errorMessage`
+    - 类型：`string`
+    - 说明：失败原因摘要
+  - `errorStack`
+    - 类型：`string`
+    - 说明：错误堆栈，通常只在开发环境记录
+  - `isRefunded`
+    - 类型：`boolean`
+    - 说明：失败后是否已退款；简历押题失败时会置为 `true`
+  - `refundedAt`
+    - 类型：`Date`
+    - 说明：退款时间
+  - `metadata`
+    - 类型：`Record<string, any>`
+    - 说明：补充元数据
+    - 常见子字段
+      - `requestId`：幂等请求 ID，代码通过 `metadata.requestId` 防止重复生成
+      - `promptVersion`：Prompt 版本
+  - `requestId`
+    - 类型：`string`
+    - 说明：schema 预留的独立请求 ID 字段；当前业务更常把 requestId 放在 `metadata.requestId`
+  - `userAgent`
+    - 类型：`string`
+    - 说明：客户端 UA
+  - `ipAddress`
+    - 类型：`string`
+    - 说明：客户端 IP
+  - `updatedAt`
+    - 类型：`Date`
+    - 说明：最后更新时间，来自 `timestamps: true`
+
+---
+
+## 4. `ResumeQuizResult`
+
+- 定位：`src/interview/schemas/interview-quiz-result.schema.ts`
+- 用途：简历押题结果，包含题目、匹配度分析、能力雷达图、用户交互状态等
+- 备注：这是简历押题的核心结果集合
+
+### 字段脑图展开
+
+- `ResumeQuizResult`
+  - `_id`
+    - 类型：`ObjectId`
+    - 说明：MongoDB 文档主键，自动生成
+  - `resultId`
+    - 类型：`string`
+    - 说明：业务结果唯一 ID，代码里用 `uuid` 生成，且 `unique`
+  - `user`
+    - 类型：`ObjectId`
+    - 说明：关联 `User` 文档的 ObjectId
+  - `userId`
+    - 类型：`string`
+    - 说明：用户 ID 的字符串形式
+  - `resumeId`
+    - 类型：`string`
+    - 说明：关联的简历 ID
+  - `company`
+    - 类型：`string`
+    - 说明：目标公司名称
+  - `position`
+    - 类型：`string`
+    - 说明：目标岗位名称
+  - `salaryRange`
+    - 类型：`string`
+    - 说明：格式化后的薪资范围，例如 `20K-35K`
+  - `jobDescription`
+    - 类型：`string`
+    - 说明：岗位 JD 文本
+  - `resumeSnapshot`
+    - 类型：`string`
+    - 说明：脱敏后的简历快照文本
+  - `questions[]`
+    - 类型：`InterviewQuestion[]`
+    - 说明：AI 生成的押题题目列表
+    - 子字段
+      - `question`
+        - 类型：`string`
+        - 说明：题目内容
+      - `answer`
+        - 类型：`string`
+        - 说明：参考答案
+      - `category`
+        - 类型：`'technical' | 'project' | 'problem-solving' | 'soft-skill' | 'behavioral' | 'scenario'`
+        - 说明：题目类别
+      - `difficulty`
+        - 类型：`'easy' | 'medium' | 'hard'`
+        - 说明：题目难度
+      - `tips`
+        - 类型：`string`
+        - 说明：答题提示
+      - `keywords`
+        - 类型：`string[]`
+        - 说明：关键词
+      - `reasoning`
+        - 类型：`string`
+        - 说明：为什么会出这道题
+      - `isFavorite`
+        - 类型：`boolean`
+        - 说明：用户是否收藏
+      - `isPracticed`
+        - 类型：`boolean`
+        - 说明：用户是否已练习
+      - `practicedAt`
+        - 类型：`Date`
+        - 说明：练习时间
+      - `userNote`
+        - 类型：`string`
+        - 说明：用户备注
+      - 备注：该子文档使用 `@Schema({ _id: false })`
+  - `totalQuestions`
+    - 类型：`number`
+    - 说明：题目总数
+  - `summary`
+    - 类型：`string`
+    - 说明：AI 生成的整体总结和建议
+  - `matchScore`
+    - 类型：`number`
+    - 说明：简历与岗位的匹配度得分，范围 `0-100`
+  - `matchLevel`
+    - 类型：`string`
+    - 说明：匹配度等级，例如优秀/良好/中等/较差
+  - `matchedSkills[]`
+    - 类型：`SkillMatch[]`
+    - 说明：匹配到的技能列表
+    - 子字段
+      - `skill`
+        - 类型：`string`
+        - 说明：技能名称
+      - `matched`
+        - 类型：`boolean`
+        - 说明：该技能是否匹配
+      - `proficiency`
+        - 类型：`string`
+        - 说明：熟练度说明
+      - 备注：该子文档使用 `@Schema({ _id: false })`
+  - `missingSkills`
+    - 类型：`string[]`
+    - 说明：当前简历里缺失的技能点
+  - `knowledgeGaps`
+    - 类型：`string[]`
+    - 说明：需要补足的知识盲区
+  - `learningPriorities[]`
+    - 类型：`LearningPriority[]`
+    - 说明：学习优先级建议
+    - 子字段
+      - `topic`
+        - 类型：`string`
+        - 说明：学习主题
+      - `priority`
+        - 类型：`'high' | 'medium' | 'low'`
+        - 说明：优先级
+      - `reason`
+        - 类型：`string`
+        - 说明：为什么要优先补这块
+      - 备注：该子文档使用 `@Schema({ _id: false })`
+  - `radarData[]`
+    - 类型：`RadarDimension[]`
+    - 说明：能力雷达图维度数据
+    - 子字段
+      - `dimension`
+        - 类型：`string`
+        - 说明：维度名称
+      - `score`
+        - 类型：`number`
+        - 说明：维度得分，`0-100`
+      - `description`
+        - 类型：`string`
+        - 说明：维度说明
+      - 备注：该子文档使用 `@Schema({ _id: false })`
+  - `strengths`
+    - 类型：`string[]`
+    - 说明：优势项
+  - `weaknesses`
+    - 类型：`string[]`
+    - 说明：薄弱项
+  - `interviewTips`
+    - 类型：`string[]`
+    - 说明：面试准备建议
+  - `questionDistribution`
+    - 类型：`Record<string, number>`
+    - 说明：题目类别分布，例如 `technical: 3`
+  - `viewCount`
+    - 类型：`number`
+    - 说明：查看次数；获取分析报告时会自动累加
+  - `lastViewedAt`
+    - 类型：`Date`
+    - 说明：最近查看时间
+  - `rating`
+    - 类型：`number`
+    - 说明：用户评分，`1-5` 星
+  - `feedback`
+    - 类型：`string`
+    - 说明：用户反馈
+  - `ratedAt`
+    - 类型：`Date`
+    - 说明：评分时间
+  - `isArchived`
+    - 类型：`boolean`
+    - 说明：是否归档
+  - `archivedAt`
+    - 类型：`Date`
+    - 说明：归档时间
+  - `isShared`
+    - 类型：`boolean`
+    - 说明：是否分享
+  - `sharedAt`
+    - 类型：`Date`
+    - 说明：分享时间
+  - `shareUrl`
+    - 类型：`string`
+    - 说明：分享链接
+  - `consumptionRecordId`
+    - 类型：`string`
+    - 说明：关联的消费记录 `recordId`
+  - `metadata`
+    - 类型：`Record<string, any>`
+    - 说明：扩展元数据，schema 预留字段
+  - `aiModel`
+    - 类型：`string`
+    - 说明：生成本结果使用的 AI 模型
+  - `promptVersion`
+    - 类型：`string`
+    - 说明：Prompt 版本，用于追踪生成策略
+  - `createdAt`
+    - 类型：`Date`
+    - 说明：创建时间，来自 `timestamps: true`
+  - `updatedAt`
+    - 类型：`Date`
+    - 说明：最后更新时间，来自 `timestamps: true`
+
+---
+
+## 5. `AIInterviewResult`
+
+- 定位：`src/interview/schemas/ai-interview-result.schema.ts`
+- 用途：模拟面试结果，既保存完整问答过程，也保存恢复会话所需状态和最终评估报告
+- 备注：同时覆盖专项面试和综合面试
+
+### 字段脑图展开
+
+- `AIInterviewResult`
+  - `_id`
+    - 类型：`ObjectId`
+    - 说明：MongoDB 文档主键，自动生成
+  - `resultId`
+    - 类型：`string`
+    - 说明：业务结果唯一 ID，代码里用 `uuid` 生成，且 `unique`
+  - `user`
+    - 类型：`ObjectId`
+    - 说明：关联 `User` 文档的 ObjectId
+  - `userId`
+    - 类型：`string`
+    - 说明：用户 ID 的字符串形式
+  - `interviewType`
+    - 类型：`'special' | 'behavior'`
+    - 说明：面试类型，专项面试或综合面试
+  - `company`
+    - 类型：`string`
+    - 说明：目标公司
+  - `position`
+    - 类型：`string`
+    - 说明：目标岗位
+  - `salaryRange`
+    - 类型：`string`
+    - 说明：薪资范围
+  - `jobDescription`
+    - 类型：`string`
+    - 说明：岗位 JD
+  - `interviewDuration`
+    - 类型：`number`
+    - 说明：面试总时长，单位分钟
+  - `interviewMode`
+    - 类型：`string`
+    - 说明：面试模式，如 `text` / `voice` / `video`；当前代码创建记录时使用 `text`
+  - `qaList[]`
+    - 类型：`InterviewQA[]`
+    - 说明：问答明细列表
+    - 子字段
+      - `question`
+        - 类型：`string`
+        - 说明：面试官问题
+      - `answer`
+        - 类型：`string`
+        - 说明：候选人回答
+      - `standardAnswer`
+        - 类型：`string`
+        - 说明：标准答案或参考答案
+      - `answerDuration`
+        - 类型：`number`
+        - 说明：回答耗时
+      - `audioUrl`
+        - 类型：`string`
+        - 说明：录音地址
+      - `videoUrl`
+        - 类型：`string`
+        - 说明：视频地址
+      - `score`
+        - 类型：`number`
+        - 说明：单题得分，`0-100`
+      - `starAnalysis`
+        - 类型：`STARAnalysis`
+        - 说明：按 STAR 模型拆分的单题分析
+        - 子字段
+          - `situation`
+            - 类型：`number`
+            - 说明：Situation 维度得分
+          - `task`
+            - 类型：`number`
+            - 说明：Task 维度得分
+          - `action`
+            - 类型：`number`
+            - 说明：Action 维度得分
+          - `result`
+            - 类型：`number`
+            - 说明：Result 维度得分
+          - `overallScore`
+            - 类型：`number`
+            - 说明：STAR 总分
+          - `feedback`
+            - 类型：`string`
+            - 说明：STAR 反馈建议
+          - 备注：该子文档使用 `@Schema({ _id: false })`
+      - `aiComment`
+        - 类型：`string`
+        - 说明：AI 对这一题的点评
+      - `highlights`
+        - 类型：`string[]`
+        - 说明：本题亮点
+      - `improvements`
+        - 类型：`string[]`
+        - 说明：本题待改进点
+      - `askedAt`
+        - 类型：`Date`
+        - 说明：提问时间
+      - `answeredAt`
+        - 类型：`Date`
+        - 说明：回答时间
+      - `savedAt`
+        - 类型：`Date`
+        - 说明：中途保存时间
+      - 备注：该子文档使用 `@Schema({ _id: false })`
+  - `totalQuestions`
+    - 类型：`number`
+    - 说明：总题数
+  - `answeredQuestions`
+    - 类型：`number`
+    - 说明：已回答题数
+  - `overallScore`
+    - 类型：`number`
+    - 说明：整体得分，`0-100`
+  - `overallLevel`
+    - 类型：`string`
+    - 说明：整体等级，例如优秀/良好/中等/需提升
+  - `overallComment`
+    - 类型：`string`
+    - 说明：整体评价
+  - `radarData[]`
+    - 类型：`RadarDimension[]`
+    - 说明：整体能力雷达图
+    - 子字段
+      - `dimension`
+        - 类型：`string`
+        - 说明：维度名称
+      - `score`
+        - 类型：`number`
+        - 说明：维度得分，`0-100`
+      - `description`
+        - 类型：`string`
+        - 说明：维度说明
+      - 备注：该子文档使用 `@Schema({ _id: false })`
+  - `improvements[]`
+    - 类型：`ImprovementSuggestion[]`
+    - 说明：整体改进建议
+    - 子字段
+      - `category`
+        - 类型：`string`
+        - 说明：建议分类，例如技术深度、表达能力
+      - `suggestion`
+        - 类型：`string`
+        - 说明：具体建议内容
+      - `priority`
+        - 类型：`'high' | 'medium' | 'low'`
+        - 说明：优先级
+      - 备注：该子文档使用 `@Schema({ _id: false })`
+  - `strengths`
+    - 类型：`string[]`
+    - 说明：整体优势
+  - `weaknesses`
+    - 类型：`string[]`
+    - 说明：整体薄弱项
+  - `avgResponseTime`
+    - 类型：`number`
+    - 说明：平均回答时长
+  - `maxResponseTime`
+    - 类型：`number`
+    - 说明：最长回答时长
+  - `minResponseTime`
+    - 类型：`number`
+    - 说明：最短回答时长
+  - `fluencyScore`
+    - 类型：`number`
+    - 说明：表达流畅度分数
+  - `logicScore`
+    - 类型：`number`
+    - 说明：逻辑性分数
+  - `professionalScore`
+    - 类型：`number`
+    - 说明：专业性分数
+  - `viewCount`
+    - 类型：`number`
+    - 说明：查看次数
+  - `lastViewedAt`
+    - 类型：`Date`
+    - 说明：最近查看时间
+  - `rating`
+    - 类型：`number`
+    - 说明：用户评分，`1-5` 星
+  - `feedback`
+    - 类型：`string`
+    - 说明：用户反馈
+  - `ratedAt`
+    - 类型：`Date`
+    - 说明：评分时间
+  - `status`
+    - 类型：`'in_progress' | 'paused' | 'completed' | 'abandoned'`
+    - 说明：面试状态，分别表示进行中、暂停、已完成、已放弃
+  - `pausedAt`
+    - 类型：`Date`
+    - 说明：暂停时间
+  - `resumedAt`
+    - 类型：`Date`
+    - 说明：恢复时间
+  - `completedAt`
+    - 类型：`Date`
+    - 说明：完成时间
+  - `sessionState`
+    - 类型：`any`
+    - 说明：完整会话状态快照，用于暂停后恢复面试
+    - 常见子字段
+      - `sessionId`
+        - 类型：`string`
+        - 说明：当前面试会话 ID
+      - `resultId`
+        - 类型：`string`
+        - 说明：当前面试结果 ID
+      - `consumptionRecordId`
+        - 类型：`string`
+        - 说明：关联消费记录 ID
+      - `userId`
+        - 类型：`string`
+        - 说明：用户 ID
+      - `interviewType`
+        - 类型：`string`
+        - 说明：面试类型
+      - `interviewerName`
+        - 类型：`string`
+        - 说明：面试官名称
+      - `candidateName`
+        - 类型：`string`
+        - 说明：候选人名称
+      - `company`
+        - 类型：`string`
+        - 说明：目标公司
+      - `positionName`
+        - 类型：`string`
+        - 说明：岗位名称
+      - `salaryRange`
+        - 类型：`string`
+        - 说明：薪资范围
+      - `jd`
+        - 类型：`string`
+        - 说明：岗位描述
+      - `resumeContent`
+        - 类型：`string`
+        - 说明：简历内容快照，后续生成问题和报告会继续使用
+      - `conversationHistory[]`
+        - 类型：`Array`
+        - 说明：会话历史
+        - 子字段
+          - `role`
+            - 类型：`'interviewer' | 'candidate'`
+            - 说明：消息角色
+          - `content`
+            - 类型：`string`
+            - 说明：消息内容
+          - `timestamp`
+            - 类型：`Date`
+            - 说明：消息时间
+          - `standardAnswer`
+            - 类型：`string`
+            - 说明：标准答案，仅面试官问题侧可能存在
+      - `questionCount`
+        - 类型：`number`
+        - 说明：当前已提问数量
+      - `startTime`
+        - 类型：`Date`
+        - 说明：会话开始时间
+      - `targetDuration`
+        - 类型：`number`
+        - 说明：目标时长，单位分钟
+      - `isActive`
+        - 类型：`boolean`
+        - 说明：会话当前是否激活
+  - `reportStatus`
+    - 类型：`'pending' | 'generating' | 'completed' | 'failed'`
+    - 说明：评估报告生成状态
+  - `reportGeneratedAt`
+    - 类型：`Date`
+    - 说明：报告生成完成时间
+  - `reportError`
+    - 类型：`string`
+    - 说明：报告生成失败原因
+  - `isArchived`
+    - 类型：`boolean`
+    - 说明：是否归档
+  - `archivedAt`
+    - 类型：`Date`
+    - 说明：归档时间
+  - `isShared`
+    - 类型：`boolean`
+    - 说明：是否分享
+  - `sharedAt`
+    - 类型：`Date`
+    - 说明：分享时间
+  - `shareUrl`
+    - 类型：`string`
+    - 说明：分享链接
+  - `consumptionRecordId`
+    - 类型：`string`
+    - 说明：关联的消费记录 `recordId`
+  - `metadata`
+    - 类型：`Record<string, any>`
+    - 说明：额外元数据
+    - 常见子字段
+      - `interviewerName`：面试官名称
+      - `candidateName`：候选人名称
+      - `sessionId`：会话 ID
+  - `aiModel`
+    - 类型：`string`
+    - 说明：使用的 AI 模型
+  - `promptVersion`
+    - 类型：`string`
+    - 说明：Prompt 版本
+  - `createdAt`
+    - 类型：`Date`
+    - 说明：创建时间，来自 `timestamps: true`
+  - `updatedAt`
+    - 类型：`Date`
+    - 说明：最后更新时间，来自 `timestamps: true`

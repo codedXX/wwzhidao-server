@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import { useRouter } from 'vue-router'
-import { useUserStore } from '../store/user'
+import { useUserStore } from '../../store/user'
 
 const router = useRouter()
 const userStore = useUserStore()
@@ -26,7 +26,7 @@ async function handleLogin() {
       email: form.value.email.trim(),
       password: form.value.password,
     })
-    router.push('/')
+    router.push('/dashboard')
   } catch (e: any) {
     error.value = e?.message || '登录失败，请检查邮箱和密码'
   } finally {

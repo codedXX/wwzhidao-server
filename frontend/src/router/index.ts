@@ -6,13 +6,13 @@ const router = createRouter({
     {
       path: '/login',
       name: 'Login',
-      component: () => import('../views/Login.vue'),
+      component: () => import('../views/login/index.vue'),
       meta: { requiresAuth: false },
     },
     {
       path: '/register',
       name: 'Register',
-      component: () => import('../views/Register.vue'),
+      component: () => import('../views/register/index.vue'),
       meta: { requiresAuth: false },
     },
     {
@@ -22,40 +22,44 @@ const router = createRouter({
       children: [
         {
           path: '',
+          redirect: '/dashboard',
+        },
+        {
+          path: 'dashboard',
           name: 'Dashboard',
-          component: () => import('../views/Dashboard.vue'),
+          component: () => import('../views/dashboard/index.vue'),
         },
         {
-          path: 'resume-quiz',
+          path: 'resumeQuiz',
           name: 'ResumeQuiz',
-          component: () => import('../views/ResumeQuiz.vue'),
+          component: () => import('../views/resumeQuiz/index.vue'),
         },
         {
-          path: 'mock-interview',
+          path: 'mockInterview',
           name: 'MockInterview',
-          component: () => import('../views/MockInterview.vue'),
+          component: () => import('../views/mockInterview/index.vue'),
         },
         {
-          path: 'interview-room/:sessionId',
+          path: 'interviewRoom/:sessionId',
           name: 'InterviewRoom',
-          component: () => import('../views/InterviewRoom.vue'),
+          component: () => import('../views/interviewRoom/index.vue'),
           props: true,
         },
         {
           path: 'report/:resultId',
           name: 'Report',
-          component: () => import('../views/Report.vue'),
+          component: () => import('../views/report/index.vue'),
           props: true,
         },
         {
           path: 'profile',
           name: 'Profile',
-          component: () => import('../views/Profile.vue'),
+          component: () => import('../views/profile/index.vue'),
         },
         {
           path: 'records',
           name: 'Records',
-          component: () => import('../views/Records.vue'),
+          component: () => import('../views/records/index.vue'),
         },
       ],
     },
@@ -68,7 +72,7 @@ router.beforeEach((to, _from, next) => {
   if (to.meta.requiresAuth !== false && !token) {
     next('/login')
   } else if ((to.name === 'Login' || to.name === 'Register') && token) {
-    next('/')
+    next('/dashboard')
   } else {
     next()
   }

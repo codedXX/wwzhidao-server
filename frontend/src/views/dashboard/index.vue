@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, onMounted } from 'vue'
-import { useUserStore } from '../store/user'
+import { useUserStore } from '../../store/user'
 
 const userStore = useUserStore()
 
@@ -13,7 +13,7 @@ const features = [
     icon: '📝',
     title: '简历押题',
     desc: '基于简历和 JD 生成高频题，适合面前快速热身。',
-    path: '/resume-quiz',
+    path: '/resumeQuiz',
     gradient: 'from-sky-500 via-cyan-500 to-blue-600',
     remaining: () => userStore.user?.resumeQuizRemainingCount || 0,
     accent: 'bg-sky-50 text-sky-700',
@@ -22,7 +22,7 @@ const features = [
     icon: '🎯',
     title: '专项面试',
     desc: '围绕目标岗位深挖技术细节，适合系统性训练。',
-    path: '/mock-interview',
+    path: '/mockInterview',
     gradient: 'from-primary-500 via-violet-500 to-fuchsia-600',
     remaining: () => userStore.user?.specialRemainingCount || 0,
     accent: 'bg-violet-50 text-violet-700',
@@ -31,7 +31,7 @@ const features = [
     icon: '💼',
     title: '综合面试',
     desc: '聚焦项目表达、行为面和 HR 提问，提升表达与临场感。',
-    path: '/mock-interview',
+    path: '/mockInterview',
     gradient: 'from-emerald-500 via-teal-500 to-cyan-600',
     remaining: () => userStore.user?.behaviorRemainingCount || 0,
     accent: 'bg-emerald-50 text-emerald-700',
