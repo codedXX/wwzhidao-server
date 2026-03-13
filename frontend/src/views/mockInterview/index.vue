@@ -19,7 +19,7 @@ const form = ref({
   minSalary: 25 as number | undefined,
   maxSalary: 35 as number | undefined,
   jd: '熟练掌握Vue.js框架及生态（Vue 2、主要Vue3），能独立完成中大型项目前端开发。精通HTML5、CSS3、JavaScript（ES6+），熟悉Flex、Grid等布局方式，了解前端工程化（Webpack、Vite）流程。具备良好的代码规范意识，能解决不同浏览器兼容性问题，有前端性能优化经验者优先',
-  resumeContent: 'https://res.lgdsunday.club/sunday-resume.pdf',
+  resumeContent: '我是一位前端开发工程师，到目前已经有了 15 年的开发经验',
 });
 
 const loading = ref(false);

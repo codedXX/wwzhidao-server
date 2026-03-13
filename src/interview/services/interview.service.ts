@@ -967,7 +967,7 @@ export class InterviewService {
         questionCount: 0,
         startTime: new Date(),
         targetDuration,
-        isActive: true,
+        isActive: true, //表示面试还没结束
       };
 
       // 将会话保存到内存中的会话池
