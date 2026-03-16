@@ -977,9 +977,9 @@ export class InterviewService {
       const resultId = uuidv4();
       const recordId = uuidv4();
 
-      // 为会话分配 resultId 和消费记录ID
-      session.resultId = resultId;
-      session.consumptionRecordId = recordId;
+      // 为会话分配 resultId 和消费记录ID，resultd和consumptionRecordId会关联在一起
+      session.resultId = resultId; //resultId相当于“作品编号”
+      session.consumptionRecordId = recordId; //consumptionRecordId相当于订单编号”
 
       // 保存面试结果记录到数据库
       await this.aiInterviewResultModel.create({
