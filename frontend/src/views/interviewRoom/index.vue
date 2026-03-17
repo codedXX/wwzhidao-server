@@ -29,6 +29,7 @@ const isThinking = ref(false)
 const isWaiting = ref(false)
 const isPaused = ref(false)
 const isEnded = ref(false)
+const isEnding = ref(false)
 const questionNumber = ref(0)
 const totalQuestions = ref(0)
 const elapsedMinutes = ref(0)
@@ -230,12 +231,27 @@ function sendAnswer() {
 }
 
 async function handleEnd() {
-  if (!resultId.value) return
+  if (!resultId.value || isEnding.value) return
+
+  isEnding.value = true
+
   try {
+    controller?.abort()
     await endMockInterview(resultId.value)
     isEnded.value = true
+    isThinking.value = false
+    isWaiting.value = false
+    isPaused.value = false
+    router.push(`/report/${resultId.value}`)
   } catch (e: any) {
+    if (e?.message?.includes('面试已经结束')) {
+      isEnded.value = true
+      router.push(`/report/${resultId.value}`)
+      return
+    }
     console.error('结束面试失败', e)
+  } finally {
+    isEnding.value = false
   }
 }
 
@@ -285,7 +301,14 @@ function viewReport() {
       <div class="flex flex-wrap items-center justify-end gap-2">
         <button v-if="!isEnded && !isPaused" @click="handlePause" class="btn-secondary px-3 py-1.5 text-xs">⏸ 暂停</button>
         <button v-if="isPaused" @click="handleResume" class="btn-primary px-3 py-1.5 text-xs">▶️ 继续</button>
-        <button v-if="!isEnded" @click="handleEnd" class="rounded-lg px-3 py-1.5 text-xs text-red-500 transition-colors hover:bg-red-50">结束面试</button>
+        <button
+          v-if="!isEnded"
+          @click="handleEnd"
+          class="rounded-lg px-3 py-1.5 text-xs text-red-500 transition-colors hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-60"
+          :disabled="isEnding"
+        >
+          {{ isEnding ? '正在结束...' : '结束面试' }}
+        </button>
         <button v-if="isEnded && resultId" @click="viewReport" class="btn-primary px-3 py-1.5 text-xs">📊 查看报告</button>
       </div>
     </div>

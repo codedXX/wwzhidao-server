@@ -9,16 +9,68 @@ const resultId = route.params.resultId as string
 const report = ref<any>(null)
 const loading = ref(true)
 const error = ref('')
+const loadingText = ref('正在加载报告...')
 
-onMounted(async () => {
+const REPORT_PENDING_MESSAGE = '评估报告正在生成中'
+const REPORT_POLL_INTERVAL = 5000
+const REPORT_MAX_RETRIES = 24
+
+function extractErrorMessage(error: any) {
+  if (typeof error?.message === 'string' && error.message.trim()) {
+    return error.message
+  }
+
+  if (Array.isArray(error?.message) && error.message.length > 0) {
+    return error.message.join('，')
+  }
+
+  return '获取报告失败'
+}
+
+function sleep(ms: number) {
+  return new Promise((resolve) => {
+    window.setTimeout(resolve, ms)
+  })
+}
+
+async function loadReport() {
+  error.value = ''
+
+  for (let attempt = 0; attempt <= REPORT_MAX_RETRIES; attempt += 1) {
+    try {
+      const res: any = await getAnalysisReport(resultId)
+      report.value = res.data
+      return
+    } catch (e: any) {
+      const message = extractErrorMessage(e)
+
+      if (message.includes(REPORT_PENDING_MESSAGE)) {
+        loadingText.value = message
+
+        if (attempt < REPORT_MAX_RETRIES) {
+          await sleep(REPORT_POLL_INTERVAL)
+          continue
+        }
+      }
+
+      error.value = message
+      return
+    }
+  }
+}
+
+async function fetchReport() {
+  loading.value = true
+  loadingText.value = '正在加载报告...'
   try {
-    const res: any = await getAnalysisReport(resultId)
-    report.value = res.data
-  } catch (e: any) {
-    error.value = e?.message || '获取报告失败'
+    await loadReport()
   } finally {
     loading.value = false
   }
+}
+
+onMounted(async () => {
+  await fetchReport()
 })
 
 const summaryCards = computed(() => {
@@ -68,12 +120,13 @@ const summaryCards = computed(() => {
 
     <div v-if="loading" class="glass-card p-14 text-center">
       <div class="mb-4 text-4xl animate-pulse-soft">📊</div>
-      <p class="text-slate-500">正在加载报告...</p>
+      <p class="text-slate-500">{{ loadingText }}</p>
     </div>
 
     <div v-else-if="error" class="glass-card p-10 text-center">
       <div class="mb-4 text-4xl">❌</div>
       <p class="text-red-500">{{ error }}</p>
+      <button @click="fetchReport" class="btn-secondary mt-6">重新获取报告</button>
     </div>
 
     <template v-else-if="report">
