@@ -17,6 +17,9 @@ interface Message {
   role: 'interviewer' | 'candidate'
   content: string
   isStreaming?: boolean
+  referenceAnswer?: string
+  referenceAnswerVisible?: boolean
+  referenceAnswerStreaming?: boolean
   timestamp: Date
 }
 
@@ -30,8 +33,6 @@ const questionNumber = ref(0)
 const totalQuestions = ref(0)
 const elapsedMinutes = ref(0)
 const chatContainer = ref<HTMLElement | null>(null)
-const referenceAnswer = ref('')
-const showReference = ref(false)
 const openingMessageIndex = ref<number | null>(null)
 
 const interviewStatus = computed(() => {
@@ -120,6 +121,26 @@ function scrollToBottom() {
   })
 }
 
+function collapseReferencePanels(exceptIndex: number | null = null) {
+  messages.value.forEach((message, index) => {
+    if (message.role !== 'interviewer' || index === exceptIndex) return
+    message.referenceAnswerVisible = false
+  })
+}
+
+function toggleReferenceAnswer(index: number) {
+  const message = messages.value[index]
+  if (!message?.referenceAnswer) return
+
+  const nextVisible = !message.referenceAnswerVisible
+  collapseReferencePanels(nextVisible ? index : null)
+  message.referenceAnswerVisible = nextVisible
+
+  if (nextVisible) {
+    scrollToBottom()
+  }
+}
+
 function sendAnswer() {
   if (!userInput.value.trim() || isThinking.value) return
 
@@ -127,8 +148,6 @@ function sendAnswer() {
   userInput.value = ''
   isWaiting.value = false
   isThinking.value = true
-  referenceAnswer.value = ''
-  showReference.value = false
 
   messages.value.push({
     role: 'candidate',
@@ -137,11 +156,16 @@ function sendAnswer() {
   })
   scrollToBottom()
 
+  collapseReferencePanels()
+
   const interviewerMsgIndex = messages.value.length
   messages.value.push({
     role: 'interviewer',
     content: '',
     isStreaming: true,
+    referenceAnswer: '',
+    referenceAnswerVisible: false,
+    referenceAnswerStreaming: false,
     timestamp: new Date(),
   })
 
@@ -163,8 +187,11 @@ function sendAnswer() {
         scrollToBottom()
       }
       if (event.type === 'reference_answer') {
-        referenceAnswer.value = event.content || ''
-        showReference.value = true
+        if (messages.value[interviewerMsgIndex]) {
+          messages.value[interviewerMsgIndex]!.referenceAnswer = event.content || ''
+          messages.value[interviewerMsgIndex]!.referenceAnswerStreaming = event.isStreaming ?? false
+        }
+        scrollToBottom()
       }
       if (event.type === 'waiting') {
         isWaiting.value = true
@@ -263,8 +290,8 @@ function viewReport() {
       </div>
     </div>
 
-    <div class="grid flex-1 min-h-0 gap-4 lg:grid-cols-[minmax(0,1fr)_320px]">
-      <div ref="chatContainer" class="min-h-0 overflow-y-auto rounded-2xl border border-slate-200/70 bg-white/70 px-2 py-2 shadow-sm backdrop-blur-sm">
+    <div class="flex-1 min-h-0">
+      <div ref="chatContainer" class="h-full min-h-0 overflow-y-auto rounded-2xl border border-slate-200/70 bg-white/70 px-2 py-2 shadow-sm backdrop-blur-sm">
         <div class="space-y-4 px-2 pb-4">
           <div
             v-for="(msg, idx) in messages"
@@ -273,12 +300,68 @@ function viewReport() {
             :class="msg.role === 'candidate' ? 'justify-end' : 'justify-start'"
           >
             <div
-              class="max-w-[85%] rounded-2xl px-5 py-3.5 text-sm leading-relaxed shadow-sm sm:max-w-[75%]"
-              :class="msg.role === 'candidate'
-                ? 'rounded-br-md bg-gradient-to-r from-primary-500 to-primary-600 text-white'
-                : 'rounded-bl-md border border-slate-100 bg-white text-slate-800'"
+              class="max-w-[88%] sm:max-w-[78%]"
             >
-              <div class="whitespace-pre-wrap break-words [overflow-wrap:anywhere]">{{ msg.content }}<span v-if="msg.isStreaming" class="typing-cursor"></span></div>
+              <div
+                class="rounded-2xl px-5 py-3.5 text-sm leading-relaxed shadow-sm"
+                :class="msg.role === 'candidate'
+                  ? 'rounded-br-md bg-gradient-to-r from-primary-500 to-primary-600 text-white'
+                  : 'rounded-bl-md border border-slate-100 bg-white text-slate-800'"
+              >
+                <div class="whitespace-pre-wrap break-words [overflow-wrap:anywhere]">{{ msg.content }}<span v-if="msg.isStreaming" class="typing-cursor"></span></div>
+              </div>
+
+              <div
+                v-if="msg.role === 'interviewer' && msg.referenceAnswer"
+                class="mt-2 flex items-center justify-end"
+              >
+                <button
+                  @click="toggleReferenceAnswer(idx)"
+                  class="inline-flex items-center gap-2 rounded-full border border-amber-200/80 bg-amber-50/90 px-3.5 py-1.5 text-xs font-medium text-amber-800 shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:border-amber-300 hover:bg-amber-100"
+                >
+                  <span>{{ msg.referenceAnswerVisible ? '收起参考答案' : '查看参考答案' }}</span>
+                  <span
+                    v-if="msg.referenceAnswerStreaming"
+                    class="inline-flex items-center gap-1 text-[11px] font-semibold text-amber-600"
+                  >
+                    <span class="h-2 w-2 rounded-full bg-amber-400 animate-pulse"></span>
+                    生成中
+                  </span>
+                </button>
+              </div>
+
+              <Transition
+                enter-active-class="transition-all duration-300 ease-out"
+                enter-from-class="translate-y-2 opacity-0"
+                enter-to-class="translate-y-0 opacity-100"
+                leave-active-class="transition-all duration-200 ease-in"
+                leave-from-class="translate-y-0 opacity-100"
+                leave-to-class="-translate-y-1 opacity-0"
+              >
+                <div
+                  v-if="msg.role === 'interviewer' && msg.referenceAnswerVisible && msg.referenceAnswer"
+                  class="mt-3 overflow-hidden rounded-2xl border border-amber-200/70 bg-gradient-to-br from-amber-50 via-white to-amber-50/80 p-4 shadow-[0_16px_40px_-24px_rgba(217,119,6,0.35)]"
+                >
+                  <div class="mb-2 flex items-center justify-between gap-3">
+                    <div class="flex items-center gap-2">
+                      <span class="flex h-7 w-7 items-center justify-center rounded-full bg-amber-100 text-sm text-amber-700">答</span>
+                      <div>
+                        <p class="text-xs font-semibold uppercase tracking-[0.18em] text-amber-700">参考答案</p>
+                        <p class="text-[11px] text-amber-600/80">仅在你需要时展开查看，不打断当前作答节奏</p>
+                      </div>
+                    </div>
+                    <span
+                      v-if="msg.referenceAnswerStreaming"
+                      class="rounded-full bg-amber-100 px-2 py-1 text-[11px] font-medium text-amber-700"
+                    >
+                      正在生成
+                    </span>
+                  </div>
+                  <div class="rounded-2xl border border-white/70 bg-white/75 px-4 py-3 text-sm leading-7 text-amber-950 whitespace-pre-wrap break-words [overflow-wrap:anywhere]">
+                    {{ msg.referenceAnswer }}<span v-if="msg.referenceAnswerStreaming" class="typing-cursor"></span>
+                  </div>
+                </div>
+              </Transition>
             </div>
           </div>
 
@@ -300,18 +383,6 @@ function viewReport() {
           </div>
         </div>
       </div>
-
-      <aside v-if="showReference && referenceAnswer" class="min-h-0">
-        <div class="flex h-full min-h-[180px] max-h-full flex-col rounded-xl border border-amber-200/50 bg-amber-50/80 p-4 shadow-sm">
-          <div class="mb-2 flex items-center gap-2">
-            <span class="text-sm">💡</span>
-            <span class="text-xs font-medium text-amber-700">参考答案</span>
-          </div>
-          <div class="min-h-0 flex-1 overflow-y-auto pr-1 text-xs leading-relaxed text-amber-800 whitespace-pre-wrap break-words [overflow-wrap:anywhere]">
-            {{ referenceAnswer }}
-          </div>
-        </div>
-      </aside>
     </div>
 
     <div v-if="!isEnded && !isPaused" class="mt-4 shrink-0 border-t border-slate-100 pt-4">
